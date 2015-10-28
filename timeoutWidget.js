@@ -11,11 +11,11 @@
 
 (function (global, $) {
     'use strict';
-    var $timer = function (name, warningSecs, expiringSecs, mode) {
-        return new $timer.factory(name, warningSecs, expiringSecs, mode);
+    var $timerMultitab = function (name, warningSecs, expiringSecs, mode) {
+        return new $timerMultitab.factory(name, warningSecs, expiringSecs, mode);
     };
     
-    $timer.prototype = {
+    $timerMultitab.prototype = {
         elapsed_in_msec: function () {
             // Convert both dates to milliseconds
             try {
@@ -138,10 +138,53 @@
             } else {
                 this.beforewarning_callback();
             }
+        },
+        // Cookie Library
+        resetCookie: function () {
+            this.nlastContinueClick = 0;
+            this.setCookieByKey('nlastContinueClick', '0');
+            this.setCookieByKey('bSessionExpired', true);
+        },
+        getCookie: function (name) {
+            var i, len, c,
+                nameEQ = name + "=",
+                cookies = window.document.cookie.split(';');
+            for (i = 0, len = cookies.length; i < len; i = i + 1) {
+                c = cookies[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1, c.length);
+                }
+                if (c.indexOf(nameEQ) === 0) {
+                    return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                }
+            }
+            return {};
+        },
+        getCookieByKey: function (key) {
+            var cookieCollection = this.getCookie('stnw');
+            if (cookieCollection.hasOwnProperty(key)) {
+                return cookieCollection[key];
+            }
+            return '';
+        },
+        setCookieByKey: function (key, value) {
+            var cookieCollection = this.getCookie('stnw'),
+                t = new Date();
+
+            cookieCollection[key] = value;
+            document.cookie = "stnw=" + JSON.stringify(cookieCollection) + "; expires="
+                + (new Date(t.getFullYear(), t.getMonth(), t.getDate(), t.getHours() + 2, t.getMinutes(), 0)).toGMTString()
+                + "; path=/" + "; domain=www.alaskaair.com";
+        },
+        incContinueClickCnt: function () {
+            this.setCookieByKey(
+                'nlastContinueClick',
+                (parseInt(this.getCookieByKey('nlastContinueClick'), 10) + 1).toString()
+            );
         }
     };
     
-    $timer.factory = function (name, warningSecs, expiringSecs, mode) {
+    $timerMultitab.factory = function (name, warningSecs, expiringSecs, mode) {
         var self = this;
         self.name = name;
         self.mode = mode || "release";
@@ -170,10 +213,10 @@
         };
     };
     
-    $timer.factory.prototype = $timer.prototype;
+    $timerMultitab.factory.prototype = $timerMultitab.prototype;
     
     if (global && !global.$timer) {
-        global.$timer = $timer;
+        global.$timer = $timerMultitab;
     }
     
 }(window, jQuery));
@@ -235,48 +278,6 @@
                 s.tl(this, 'o', 'sessionExpiring::' + item);
                 s.prop16 = '';
             }
-        },
-        resetCookie: function () {
-            this.nlastContinueClick = 0;
-            this.setCookieByKey('nlastContinueClick', '0');
-            this.setCookieByKey('bSessionExpired', true);
-        },
-        getCookie: function (name) {
-            var i, len, c,
-                nameEQ = name + "=",
-                cookies = window.document.cookie.split(';');
-            for (i = 0, len = cookies.length; i < len; i = i + 1) {
-                c = cookies[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1, c.length);
-                }
-                if (c.indexOf(nameEQ) === 0) {
-                    return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
-                }
-            }
-            return {};
-        },
-        getCookieByKey: function (key) {
-            var cookieCollection = this.getCookie('stnw');
-            if (cookieCollection.hasOwnProperty(key)) {
-                return cookieCollection[key];
-            }
-            return '';
-        },
-        setCookieByKey: function (key, value) {
-            var cookieCollection = this.getCookie('stnw'),
-                t = new Date();
-
-            cookieCollection[key] = value;
-            document.cookie = "stnw=" + JSON.stringify(cookieCollection) + "; expires="
-                + (new Date(t.getFullYear(), t.getMonth(), t.getDate(), t.getHours() + 2, t.getMinutes(), 0)).toGMTString()
-                + "; path=/" + "; domain=www.alaskaair.com";
-        },
-        incContinueClickCnt: function () {
-            this.setCookieByKey(
-                'nlastContinueClick',
-                (parseInt(this.getCookieByKey('nlastContinueClick'), 10) + 1).toString()
-            );
         },
         done_message: function () {
             return 'Your session expired at <b>' + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1")) + '</b>';
