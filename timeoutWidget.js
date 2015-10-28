@@ -1,4 +1,4 @@
-/*global jQuery, s_gi, stnw_init_page */
+/*global jQuery, s_gi, stnw_init_page, console*/
 // --------------------
 // stnw library / start
 // --------------------
@@ -11,14 +11,11 @@
 
 (function (global, $) {
     'use strict';
-    var $timer = function (name, warningSecs, expiringSecs, beforewarning_callback, afterwarning_callback, done_callback) {
-        return new $timer.factory(name, warningSecs, expiringSecs, beforewarning_callback, afterwarning_callback, done_callback);
+    var $timer = function (name, warningSecs, expiringSecs, mode) {
+        return new $timer.factory(name, warningSecs, expiringSecs, mode);
     };
     
     $timer.prototype = {
-        timeLeft: function () {
-            return Math.floor(Math.max(0, (this.timings.session_timeout_in_msec - this.elapsed_in_msec())) / 1000);
-        },
         elapsed_in_msec: function () {
             // Convert both dates to milliseconds
             try {
@@ -32,6 +29,15 @@
                 global.console.log(e);
                 return 0;
             }
+        },
+        isDone: function () {
+            return (this.elapsed_in_msec() > this.timings.session_timeout_in_msec);
+        },
+        isWarningThresholdReached: function () {
+            return this.elapsed_in_msec() >= this.timings.session_timeout_warning_happens_in_msec;
+        },
+        timeLeft: function () {
+            return Math.floor(Math.max(0, (this.timings.session_timeout_in_msec - this.elapsed_in_msec())) / 1000);
         },
         is_settings_valid: function () {
             if (typeof this.timings.session_timeout_in_msec !== 'number') {
@@ -79,37 +85,31 @@
                     start();
                 },
                 check: function () {
-                    var elapsed_msec = self.elapsed_in_msec(),
-                        done = (elapsed_msec > self.timings.session_timeout_in_msec);
-
                     // determine total percent complete, ie., ratio of 'elapsed time' to 'time session is active'
                     // UI will want to respond to this countdown
-                    self.timings.total_countdown_percent_complete = Math.floor(100 * (elapsed_msec / self.timings.session_timeout_in_msec));
+                    self.timings.total_countdown_percent_complete = Math.floor(100 * (self.elapsed_in_msec() / self.timings.session_timeout_in_msec));
 
                     // determine warning percent complete, ie., ratio of 'elapsed time' to 'time to wait before warning'
                     // UI may want to respond to this countdown
                     self.timings.warning_countdown_percent_complete
-                        = Math.floor(100 * ((elapsed_msec - self.timings.session_timeout_warning_happens_in_msec)
+                        = Math.floor(100 * ((self.elapsed_in_msec() - self.timings.session_timeout_warning_happens_in_msec)
                             / (self.timings.session_timeout_in_msec - self.timings.session_timeout_warning_happens_in_msec)));
 
                     self.timings.count = self.timings.count + 1;
 
-                    if (done) {
+                    if (self.isDone()) {
                         // finish and cleanup
                         self.timings.session_has_timeedout = true;
 
-                        if (typeof self.done_callback !== 'undefined') {
+                        if (typeof self.done_callback !== 'undefined' && self.mode.toLowerCase() !== 'release') {
                             self.done_callback();
                         }
                         return;
                     }
 
                     //raise callback so client can update its UI
-                    if (typeof self.taskRunner !== 'undefined') {
-
-                        self.timings.warning_threshold_reached
-                            = elapsed_msec >= self.timings.session_timeout_warning_happens_in_msec;
-                        self.taskRunner(self.timings, done, self.timings.warning_threshold_reached);
+                    if (typeof self.taskRunner !== 'undefined' && self.mode.toLowerCase() !== 'release') {
+                        self.taskRunner(self.timings, self.isDone(), self.isWarningThresholdReached());
                     }
                 }
             };
@@ -122,7 +122,6 @@
 
             this.timings.countdown_started = new Date();   // start the countdown timer
             this.timings.session_has_timeedout = false;
-            this.timings.warning_threshold_reached = false;
 
             this.timings.is_resetting_session = false;
         },
@@ -142,14 +141,22 @@
         }
     };
     
-    $timer.factory = function (name, warningSecs, expiringSecs, beforewarning_callback, afterwarning_callback, done_callback) {
+    $timer.factory = function (name, warningSecs, expiringSecs, mode) {
         var self = this;
         self.name = name;
+        self.mode = mode || "release";
         
         // Initialize timer callback
-        self.beforewarning_callback = beforewarning_callback;
-        self.afterwarning_callback = afterwarning_callback;
-        self.done_callback = done_callback;
+        self.beforewarning_callback = function () {
+            console.log(this.name + ' ' + this.timeLeft() + ': called Before warning callback');
+        };
+        
+        self.afterwarning_callback = function () {
+            console.log(this.name + ' ' + this.timeLeft() + ': called After warning callback');
+        };
+        self.done_callback = function () {
+            console.log(this.name + ' ' + "time passed.");
+        };
         self.timings = {
             count: 1,
             poll_time_in_msec: 1000,  // 1 sec
@@ -158,7 +165,6 @@
             countdown_started: null,
             total_countdown_percent_complete: 0,
             warning_countdown_percent_complete: 0,
-            warning_threshold_reached: false,
             session_has_timeedout: false,
             is_resetting_session: false
         };
@@ -220,6 +226,16 @@
                 $.hideFormFiller();
             }
         },
+        propagateOmnitureTag: function (item) {
+            if (s_gi) {
+                var s = s_gi('alaskacom');
+                s.linkTrackVars = 'prop16';
+                s.linkTrackEvents = 'None';
+                s.prop16 = 'sessionExpiring::' + item;
+                s.tl(this, 'o', 'sessionExpiring::' + item);
+                s.prop16 = '';
+            }
+        },
         resetCookie: function () {
             this.nlastContinueClick = 0;
             this.setCookieByKey('nlastContinueClick', '0');
@@ -255,16 +271,6 @@
             document.cookie = "stnw=" + JSON.stringify(cookieCollection) + "; expires="
                 + (new Date(t.getFullYear(), t.getMonth(), t.getDate(), t.getHours() + 2, t.getMinutes(), 0)).toGMTString()
                 + "; path=/" + "; domain=www.alaskaair.com";
-        },
-        propagateOmnitureTag: function (item) {
-            if (s_gi) {
-                var s = s_gi('alaskacom');
-                s.linkTrackVars = 'prop16';
-                s.linkTrackEvents = 'None';
-                s.prop16 = 'sessionExpiring::' + item;
-                s.tl(this, 'o', 'sessionExpiring::' + item);
-                s.prop16 = '';
-            }
         },
         incContinueClickCnt: function () {
             this.setCookieByKey(
