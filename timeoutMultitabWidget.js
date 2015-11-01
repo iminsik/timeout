@@ -16,10 +16,17 @@
     };
     
     $timerMultitab.prototype = {
-        elapsed_in_msec: function () {
+        errors: {
+            POSITIVESESSIONTIMEOUT: 'Session timeout must be a positive number.',
+            NONZEROTIMEOUT: 'Session timeout can\'t be zero or negative.',
+            POSITIVEWARNINGTIME: 'Session timeout warning must be a positive number.',
+            NONWARNINGTIME: 'Session timeout warning can\'t be zero or negative.',
+            WARNINGSMALLERTHANTIMEOUT: 'Session timeout warning must be smaller than Session timeout.'
+        },
+        elapsedInMsec: function () {
             // Convert both dates to milliseconds
             try {
-                var t_start = this.timings.countdown_started.getTime(),
+                var t_start = this.timings.countdownStarted.getTime(),
                     t_now = (new Date()).getTime(),
 
                 // Calculate the difference in milliseconds
@@ -31,119 +38,138 @@
             }
         },
         isDone: function () {
-            return (this.elapsed_in_msec() > this.timings.session_timeout_in_msec);
+            return this.elapsedInMsec()
+				> this.timings.sessionTimeoutInMsec;
         },
         isWarningThresholdReached: function () {
-            return this.elapsed_in_msec() >= this.timings.session_timeout_warning_happens_in_msec;
+            return this.elapsedInMsec()
+				>= this.timings.sessionTimeoutWarningHappensInMsec;
         },
         timeLeft: function () {
-            return Math.floor(Math.max(0, (this.timings.session_timeout_in_msec - this.elapsed_in_msec())) / 1000);
+            return Math.floor(Math.max(0,
+									   (this.timings.sessionTimeoutInMsec
+										- this.elapsedInMsec()))
+							  / 1000);
         },
-        is_settings_valid: function () {
-            if (typeof this.timings.session_timeout_in_msec !== 'number') {
-                global.console.log('Session timeout must be a positive number.');
+        isSettingsValid: function () {
+            if (typeof this.timings.sessionTimeoutInMsec !== 'number') {
+                global.console.log(this.errors.POSITIVESESSIONTIMEOUT);
                 return false;
             }
-            if (this.timings.session_timeout_in_msec <= 0) {
-                global.console.log('Session timeout can\'t be zero or negative.');
+            if (this.timings.sessionTimeoutInMsec <= 0) {
+                global.console.log(this.errors.NONEZEROTIMEOUT);
                 return false;
             }
-            if (typeof this.timings.session_timeout_warning_happens_in_msec !== 'number') {
-                global.console.log('Session timeout warning must be a positive number.');
+            if (typeof this.timings.sessionTimeoutWarningHappensInMsec !== 'number') {
+                global.console.log(this.errors.POSITIVEWARNINGTIME);
                 return false;
             }
-            if (this.timings.session_timeout_warning_happens_in_msec <= 0) {
-                global.console.log('Session timeout warning can\'t be zero or negative.');
+            if (this.timings.sessionTimeoutWarningHappensInMsec <= 0) {
+                global.console.log(this.errors.NONWARNINGTIME);
                 return false;
             }
-            if (this.timings.session_timeout_warning_happens_in_msec >= this.timings.session_timeout_in_msec) {
-                global.console.log('Session timeout warning must be smaller than Session timeout.');
+            if (this.timings.sessionTimeoutWarningHappensInMsec >= this.timings.sessionTimeoutInMsec) {
+                global.console.log(this.errors.WARNINGSMALLERTHANTIMEOUT);
                 return false;
             }
 
             return true;
         },
-        startTimer: function () {
-            var self = this,
-                timer = {};
+        timerEventResetSession: function () {
+            if (this.timings.isResettingSession) { return; }
 
-            timer.events = {
-                start: function () {
-                    self.timings.countdown_started = new Date();   // start the countdown timer
-                    // fire delayed event
+            this.timings.isResettingSession = true;
 
-                    var start = function () {
-                        if (self.is_settings_valid() === false) {
-                            return;
-                        }
-                        timer.events.check();
-                        if (self.timings.session_has_timeedout === false) {
-                            setTimeout(start, self.timings.poll_time_in_msec);
-                        }
-                    };
+            this.timings.countdownStarted = new Date();   // start the countdown timer
+            this.timings.sessionHasTimedout = false;
 
-                    start();
-                },
-                check: function () {
-                    // determine total percent complete, ie., ratio of 'elapsed time' to 'time session is active'
-                    // UI will want to respond to this countdown
-                    self.timings.total_countdown_percent_complete = Math.floor(100 * (self.elapsed_in_msec() / self.timings.session_timeout_in_msec));
-
-                    // determine warning percent complete, ie., ratio of 'elapsed time' to 'time to wait before warning'
-                    // UI may want to respond to this countdown
-                    self.timings.warning_countdown_percent_complete
-                        = Math.floor(100 * ((self.elapsed_in_msec() - self.timings.session_timeout_warning_happens_in_msec)
-                            / (self.timings.session_timeout_in_msec - self.timings.session_timeout_warning_happens_in_msec)));
-
-                    self.timings.count = self.timings.count + 1;
-
-                    if (self.isDone()) {
-                        // finish and cleanup
-                        self.timings.session_has_timeedout = true;
-
-                        if (typeof self.done_callback !== 'undefined' && self.mode.toLowerCase() !== 'release') {
-                            self.done_callback();
-                        }
-                        return;
-                    }
-
-                    //raise callback so client can update its UI
-                    if (typeof self.taskRunner !== 'undefined' && self.mode.toLowerCase() !== 'release') {
-                        self.taskRunner(self.timings, self.isDone(), self.isWarningThresholdReached());
-                    }
-                }
-            };
-            timer.events.start();
+            this.timings.isResettingSession = false;
         },
-        resetSession: function () {
-            if (this.timings.is_resetting_session) { return; }
-
-            this.timings.is_resetting_session = true;
-
-            this.timings.countdown_started = new Date();   // start the countdown timer
-            this.timings.session_has_timeedout = false;
-
-            this.timings.is_resetting_session = false;
-        },
-        continueSession: function () {
-            this.resetSession();
-            if (typeof this.continue_callback !== 'undefined') {
-                this.continue_callback();
+        timerEventContinueSession: function () {
+            this.timerEventResetSession();
+            if (typeof this.continueCallback !== 'undefined') {
+                this.continueCallback();
             }
         },
-        taskRunner: function (timings, done, warning_time_met) {
-            //show message if warning time is reached.
-            if (warning_time_met) {
-                this.afterwarning_callback();
+        timerEventStart: function () {
+            var self = this, startDeferred;
+            self.timings.countdownStarted = new Date();   // start the countdown timer
+            // fire delayed event
+
+            startDeferred = function () {
+                if (self.isSettingsValid() === false) {
+                    return;
+                }
+                self.timerEventCheck();
+                if (self.timings.sessionHasTimedout === false) {
+                    setTimeout(startDeferred,
+                               self.timings.pollTimeInMsec);
+                }
+            };
+
+            startDeferred();
+        },
+        timerEventCheck: function () {
+            // determine total percent complete, ie., ratio of 'elapsed time' to 'time session is active'
+            // UI will want to respond to this countdown
+            this.timings.totalCountdownPercentComplete
+                = Math.floor(100 *
+                             (this.elapsedInMsec()
+                              / this.timings.sessionTimeoutInMsec));
+
+            // determine warning percent complete, ie., ratio of 'elapsed time' to 'time to wait before warning'
+            // UI may want to respond to this countdown
+            this.timings.warningCountdownPercentComplete
+                = Math.floor(100 * ((this.elapsedInMsec()
+                                     - this.timings.sessionTimeoutWarningHappensInMsec)
+                    / (this.timings.sessionTimeoutInMsec
+                       - this.timings.sessionTimeoutWarningHappensInMsec)));
+
+            this.timings.count = this.timings.count + 1;
+
+            if (this.isDone()) {
+                this.setCookieByKey('bSessionExpired', true);
+
+                // finish and cleanup
+                this.timings.sessionHasTimedout = true;
+
+                if (typeof this.doneCallback !== 'undefined'
+                        && this.mode.toLowerCase() !== 'release') {
+                    this.doneCallback();
+                }
+                return;
+            }
+
+            //raise callback so client can update its UI
+            if (typeof this.timerEventIdle !== 'undefined'
+                    && this.mode.toLowerCase() !== 'release') {
+                this.timerEventIdle(this.timings, this.isDone(),
+                                this.isWarningThresholdReached());
+            }
+        },
+        timerEventIdle: function (timings, done, warning_time_met) {
+            var nClickContCookie = this.getCookieByKey('nClickCont'),
+                bSessionExpiredCookie = this.getCookieByKey('bSessionExpired');
+            // reset the Session, if 'Continue' button is hit in another tab.
+            if (this.timings.multitab.nClickCont < nClickContCookie) {
+                this.timings.multitab.nClickCont = nClickContCookie;
+
+                // Define continueCallback 
+                this.timerEventContinueSession();
             } else {
-                this.beforewarning_callback();
+                //show message if warning time is reached.
+                if (warning_time_met) {
+                    this.afterWarningCallback();
+                } else {
+                    this.beforeWarningCallback();
+                }
             }
         },
         // Cookie Library
         resetCookie: function () {
-            this.nlastContinueClick = 0;
-            this.setCookieByKey('nlastContinueClick', '0');
+            this.multitab.nClickCont = 0;
             this.setCookieByKey('bSessionExpired', true);
+            this.setCookieByKey('nClickCont', '0');
         },
         getCookie: function (name) {
             var i, len, c,
@@ -161,25 +187,37 @@
             return {};
         },
         getCookieByKey: function (key) {
-            var cookieCollection = this.getCookie('stnw');
+            var cookieCollection = this.getCookie('timerMultiTab');
             if (cookieCollection.hasOwnProperty(key)) {
                 return cookieCollection[key];
             }
             return '';
         },
         setCookieByKey: function (key, value) {
-            var cookieCollection = this.getCookie('stnw'),
+            var cookieCollection = this.getCookie('timerMultiTab'),
                 t = new Date();
 
             cookieCollection[key] = value;
-            document.cookie = "stnw=" + JSON.stringify(cookieCollection) + "; expires="
-                + (new Date(t.getFullYear(), t.getMonth(), t.getDate(), t.getHours() + 2, t.getMinutes(), 0)).toGMTString()
-                + "; path=/" + "; domain=www.alaskaair.com";
+            document.cookie = "timerMultiTab=" + JSON.stringify(cookieCollection)
+                + "; expires="
+                + (new Date(t.getFullYear(),
+                            t.getMonth(),
+                            t.getDate(),
+                            t.getHours() + 2,
+                            t.getMinutes(),
+                            0)).toGMTString()
+                + "; path=/"
+                + "; domain=127.0.0.1";
         },
         incContinueClickCnt: function () {
+            var strClickCont = this.getCookieByKey('nClickCont');
+            if (strClickCont === '') {
+                strClickCont = '0';
+            }
+
             this.setCookieByKey(
-                'nlastContinueClick',
-                (parseInt(this.getCookieByKey('nlastContinueClick'), 10) + 1).toString()
+                'nClickCont',
+                (parseInt(strClickCont, 10) + 1).toString()
             );
         }
     };
@@ -190,237 +228,41 @@
         self.mode = mode || "release";
         
         // Initialize timer callback
-        self.beforewarning_callback = function () {
-            console.log(this.name + ' ' + this.timeLeft() + ': called Before warning callback');
+        self.beforeWarningCallback = function () {
+            console.log(this.name + ' ' + this.timeLeft()
+                        + ': called Before warning callback.');
         };
         
-        self.afterwarning_callback = function () {
-            console.log(this.name + ' ' + this.timeLeft() + ': called After warning callback');
+        self.afterWarningCallback = function () {
+            console.log(this.name + ' ' + this.timeLeft()
+                        + ': called After warning callback.');
         };
-        self.done_callback = function () {
+        self.doneCallback = function () {
             console.log(this.name + ' ' + "time passed.");
+        };
+        self.continueCallback = function () {
+            console.log(this.name + ' ' + "is continued.");
         };
         self.timings = {
             count: 1,
-            poll_time_in_msec: 1000,  // 1 sec
-            session_timeout_in_msec: expiringSecs * 1000,  // 20 mins - 3 secs
-            session_timeout_warning_happens_in_msec: warningSecs * 1000,  // 20 mins - 23 secs
-            countdown_started: null,
-            total_countdown_percent_complete: 0,
-            warning_countdown_percent_complete: 0,
-            session_has_timeedout: false,
-            is_resetting_session: false
+            pollTimeInMsec: 1000,  // 1 sec
+            sessionTimeoutInMsec: expiringSecs * 1000,  // 20 mins - 3 secs
+            sessionTimeoutWarningHappensInMsec: warningSecs * 1000,  // 20 mins - 23 secs
+            countdownStarted: null,
+            totalCountdownPercentComplete: 0,
+            warningCountdownPercentComplete: 0,
+            sessionHasTimedout: false,
+            isResettingSession: false,
+            multitab: {
+                nClickCont: 0
+            }
         };
     };
     
     $timerMultitab.factory.prototype = $timerMultitab.prototype;
     
     if (global && !global.$timer) {
-        global.$timer = $timerMultitab;
+        global.$timerMultitab = $timerMultitab;
     }
     
 }(window, jQuery));
-
-/*global window, jQuery, document, s_gi, asglobal, $timer*/
-(function (global, $, $timer) {
-    'use strict';
-    var $timeoutBox = function (warningSecs, expiringSecs) {
-        return new $timeoutBox.factory(warningSecs, expiringSecs);
-    };
-    
-    $timeoutBox.prototype = {
-        userTypeAndRedirectUrlEnum: {
-            maaUser: {
-                userType: 'MAAUser',
-                redirectURL: '//www.alaskaair.com/www2/ssl/myalaskaair/MyAlaskaAir.aspx?CurrentForm=UCSignInStart&advise=eSessionTimeout'
-            },
-            ezbUser: {
-                userType: 'EZBUser',
-                redirectURL: '//easybiz.alaskaair.com/ssl/signin/cosignin.aspx?CurrentForm=UCCoSignInStart&advise=eSessionTimeout'
-            },
-            ezbSuperUser: {
-                userType: 'EZBSuperUser',
-                redirectURL: ''
-            },
-            travelAgent: {
-                userType: 'TravelAgent',
-                redirectURL: ''
-            }
-        },
-        extendSession: function () {
-            $.ajax({
-                url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
-                success: function (data) {
-                    if (data.bLogin === false) {
-                        this.done_callback();
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    this.done_callback();
-                },
-                timeout: this.ajaxTimeout
-            });
-        },
-        hideAllLightBoxes: function () {
-            if ($.hideLightBoxes) {
-                $.hideLightBoxes();
-            }
-            if ($.hideFormFiller) {
-                $.hideFormFiller();
-            }
-        },
-        propagateOmnitureTag: function (item) {
-            if (s_gi) {
-                var s = s_gi('alaskacom');
-                s.linkTrackVars = 'prop16';
-                s.linkTrackEvents = 'None';
-                s.prop16 = 'sessionExpiring::' + item;
-                s.tl(this, 'o', 'sessionExpiring::' + item);
-                s.prop16 = '';
-            }
-        },
-        done_message: function () {
-            return 'Your session expired at <b>' + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1")) + '</b>';
-        },
-        isUserLoggedIn: function (successCallback, failureCallback) {
-            $.ajax({
-                url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
-                success: function (data) {
-                    // Start timer callback, depending on user type
-                    if (data.bLogin === true) {
-                        this.setCookieByKey('bSessionExpired', false);
-                        // Set User Type
-                        if (data.bEasyBiz === true) {
-                            this.userType = this.userTypeAndRedirectUrlEnum.ezbUser.userType;
-                        } else {
-                            this.userType = this.userTypeAndRedirectUrlEnum.maaUser.userType;
-                        }
-
-                        // Set Default Redirect URL for EasyBiz
-                        if (this.userType === this.userTypeAndRedirectUrlEnum.ezbUser.userType) {
-                            this.redirectURL = this.userTypeAndRedirectUrlEnum.ezbUser.redirectURL;
-                        } else { // Overwrite RedirectURL in AS.COM, if each page doesn't specifiy Redirect URL
-                            if (this.redirectURL === '') {
-                                // if not SiteCore page
-                                if (global.location && global.location.pathname.toLowerCase().indexOf('/content/') === -1) {
-                                    this.redirectURL = this.userTypeAndRedirectUrlEnum.maaUser.redirectURL;
-                                }
-                            }
-                        }
-
-                        (successCallback || Function)();
-                    } else {
-                        (failureCallback || Function)();
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    this.setCookieByKey('bSessionExpired', true);
-                }
-            });
-        },
-        timeoutStart: function () {
-            this.isUserLoggedIn(this.timer.startTimer, this.resetCookie);
-        },
-        init: function () {
-            // Inject Session Timeout Div from SiteCore
-            $.ajax({
-                url: '//' + asglobal.domainUrl + '/content/partial/session-timeout',
-                cache: false,
-                success: function (data) {
-                    if (data.toLowerCase().indexOf("this page has taken off") === -1) {
-                        $('body').append(data);
-
-                        // Bind click event to Continue Button
-                        $('#sessionContinue').bind('click', function () {
-                            this.hideAllLightBoxes();
-                            
-                            this.propagateOmnitureTag('Continue'); // Setting omniture tags
-                            this.incContinueClickCnt();
-                            this.extendSession();
-                        });
-
-                        //define callback to timer events
-                        this.ui_update_callback = function (timings, done, warning_time_met) {
-                            // reset the Session, if 'Continue' button is hit in another tab.
-                            if (this.nlastContinueClick < parseInt(this.getCookieByKey('nlastContinueClick'), 10)) {
-                                this.hideAllLightBoxes();
-                                
-                                this.nlastContinueClick = this.nlastContinueClick + 1;
-                                
-                                this.continueSession();
-                            } else {
-                                //show UI if warning time is reached.
-                                if (warning_time_met) {
-                                    // Prevent lightbox from blinking.
-                                    if ($('#sessionSection').css('display') === 'none') {
-                                        $('#sessionSection').showLightBox({
-                                            width: 460,
-                                            height: 215,
-                                            onClose: function () {
-                                                this.propagateOmnitureTag('Close'); // Setting omniture tags
-                                                this.incContinueClickCnt();
-                                                this.extendSession();
-                                            }
-                                        }).show();
-                                        $('#sessionSection').attr('tabindex', '0').focus();
-                                    }
-
-                                    // AS.COM/EASYBIZ Signout Signal
-                                    if (this.getCookieByKey('bSessionExpired') === true) {
-                                        this.isUserLoggedIn(null, this.done_callback);
-                                    }
-                                } else {
-                                    $('#sessionSection').hide();
-                                }
-
-                                $('#sessionTimeLeft').text(this.timeLeft() + ' seconds');
-                            }
-                        };
-
-                        // Initialize multi-tab configuration
-                        var nlastContinueClickCookie = this.getCookieByKey("nlastContinueClick");
-                        if (nlastContinueClickCookie === '' || nlastContinueClickCookie === '0') {
-                            this.setCookieByKey('nlastContinueClick', '0');
-                        }
-                        // When any tab is refreshed, initialize.
-                        this.setCookieByKey(
-                            'nlastContinueClick',
-                            (parseInt(this.getCookieByKey('nlastContinueClick'), 10) + 1).toString()
-                        );
-                        this.nlastContinueClick = parseInt(this.getCookieByKey('nlastContinueClick'), 10) - 1;
-
-                        if (typeof (stnw_init_page) === "function") {
-                            stnw_init_page();
-                        }
-
-                        this.timeoutStart();
-                    }
-                }
-            });
-
-        }
-    };
-
-    $timeoutBox.factory = function (warningSecs, expiringSecs) {
-        var self = this;
-        // TODO: initialize warningTime and expiringTime in stnw
-        // example: 
-        //      self.warningTime = warningTime
-        //      self.expiringTime = expiringTime
-        self.redirectURL = '';
-        self.userType = '';
-    
-        // Initialize multitab configuration
-        self.nlastContinueClick = 0;
-        self.nlastContinueClickCookie = 0;
-
-        // Initialize bSessionExpire 'true' by Default
-        this.setCookieByKey('bSessionExpired', true);
-    };
-
-    $timeoutBox.factory.prototype = $timeoutBox.prototype;
-
-    if (global && !global.$timeoutBox) {
-        global.$timeoutBox = $timeoutBox;
-    }
-}(window, jQuery, window.$timer));
