@@ -3,25 +3,73 @@
 // stnw library / start
 // --------------------
 
-// (s)ession (t)imeout (n)otification (w)idget object
-// this block of code is responsible for initilizing the object
-// implementing the countdown and setting the internal status.
-// *** the UI code that implements this library is responsible
-// for managing the UI that needs to respond to this object ***
-(function (global, $) {
+// Cookie Store
+(function (global, document) {
     'use strict';
-    var $timer = function (warningSecs, expiringSecs) {
-        return new $timer.factory(warningSecs, expiringSecs);
+    var cookieStore = function () {
+        return new cookieStore.factory();
     };
     
-    $timer.prototype = {
-        ERRORS: {
-            POSITIVESESSIONTIMEOUT: 'Session timeout must be a positive number.',
-            NONZEROTIMEOUT: 'Session timeout can\'t be zero or negative.',
-            POSITIVEWARNINGTIME: 'Session timeout warning must be a positive number.',
-            NONWARNINGTIME: 'Session timeout warning can\'t be zero or negative.',
-            WARNINGSMALLERTHANTIMEOUT: 'Session timeout warning must be smaller than Session timeout.'
+    cookieStore.prototype = {
+        getCookie: function (name) {
+            var i, len, c,
+                nameEQ = name + "=",
+                cookies = window.document.cookie.split(';');
+            for (i = 0, len = cookies.length; i < len; i = i + 1) {
+                c = cookies[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1, c.length);
+                }
+                if (c.indexOf(nameEQ) === 0) {
+                    return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                }
+            }
+            return {};
         },
+        getByKey: function (store, key) {
+            var cookieCollection = this.getCookie(store);
+            if (cookieCollection.hasOwnProperty(key)) {
+                return cookieCollection[key];
+            }
+            return '';
+        },
+        setByKey: function (store, key, value, domain) {
+            var cookieCollection = this.getCookie(store),
+                t = new Date();
+
+            cookieCollection[key] = value;
+            document.cookie = store + "=" + JSON.stringify(cookieCollection)
+                + "; expires="
+                + (new Date(t.getFullYear(),
+                            t.getMonth(),
+                            t.getDate(),
+                            t.getHours() + 2,
+                            t.getMinutes(),
+                            0)).toGMTString()
+                + "; path=/"
+                + "; domain=" + domain;
+        }
+    };
+    
+    cookieStore.factory = function () {
+        
+    };
+
+    cookieStore.factory.prototype = cookieStore.prototype;
+
+    if (global && !global.cookieStore) {
+        global.cookieStore = cookieStore;
+    }
+}(window, document));
+
+// Basic Timer & Events
+(function (global) {
+    'use strict';
+    var timer = function (warningSecs, expiringSecs) {
+        return new timer.factory(warningSecs, expiringSecs);
+    };
+    
+    timer.prototype = {
         elapsedInMsec: function () {
             // Convert both dates to milliseconds
             try {
@@ -85,7 +133,15 @@
         }
     };
     
-    $timer.factory = function (warningSecs, expiringSecs) {
+    timer.prototype.ERRORS = {
+        POSITIVESESSIONTIMEOUT: 'Session timeout must be a positive number.',
+        NONZEROTIMEOUT: 'Session timeout can\'t be zero or negative.',
+        POSITIVEWARNINGTIME: 'Session timeout warning must be a positive number.',
+        NONWARNINGTIME: 'Session timeout warning can\'t be zero or negative.',
+        WARNINGSMALLERTHANTIMEOUT: 'Session timeout warning must be smaller than Session timeout.'
+    };
+
+    timer.factory = function (warningSecs, expiringSecs) {
         this.count = 1;
         this.pollTimeInMsec = 1000;  // 1 sec
         this.sessionTimeoutInMsec = expiringSecs * 1000;  // 20 mins - 3 secs
@@ -97,20 +153,20 @@
         this.isResettingSession = false;
     };
     
-    $timer.factory.prototype = $timer.prototype;
+    timer.factory.prototype = timer.prototype;
 
-    if (global && !global.$timer) {
-        global.$timer = $timer;
+    if (global && !global.timer) {
+        global.timer = timer;
     }
 }(window, jQuery));
 
-(function (global, $, $timer) {
+(function (global, $, timer, cookieStore) {
     'use strict';
-    var $timerMultitab = function (name, warningSecs, expiringSecs, mode) {
-        return new $timerMultitab.factory(name, warningSecs, expiringSecs, mode);
+    var timerMultitab = function (name, warningSecs, expiringSecs, mode) {
+        return new timerMultitab.factory(name, warningSecs, expiringSecs, mode);
     };
     
-    $timerMultitab.prototype = {
+    timerMultitab.prototype = {
         timerEventRestart: function () {
             this.timer.reset();
             if (typeof this.continueCallback !== 'undefined') {
@@ -154,7 +210,7 @@
 
             this.timer.count = this.timer.count + 1;
 
-            if (this.timer.isDone()) {
+            if (this.timer.isDone() || cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired') === true) {
                 this.resetCookie();
 
                 // finish and cleanup
@@ -175,8 +231,8 @@
             }
         },
         timerEventIdle: function (isDone, isWarningTimeMet) {
-            var nClickContCookie = this.getCookieByKey('nClickCont'),
-                bSessionExpiredCookie = this.getCookieByKey('bSessionExpired');
+            var nClickContCookie = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont'),
+                bSessionExpiredCookie = cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired');
             // reset the Session, if 'Continue' button is hit in another tab.
             if (this.multitab.nClickCont < nClickContCookie) {
                 this.multitab.nClickCont = nClickContCookie;
@@ -195,65 +251,31 @@
         // Cookie Library
         resetCookie: function () {
             this.multitab.nClickCont = 0;
-            this.setCookieByKey('bSessionExpired', true);
-            this.setCookieByKey('nClickCont', '0');
+            cookieStore.prototype.setByKey('timerMultiTab', 'bSessionExpired', true, '127.0.0.1');
+            cookieStore.prototype.setByKey('timerMultiTab', 'nClickCont', '0', '127.0.0.1');
         },
-        getCookie: function (name) {
-            var i, len, c,
-                nameEQ = name + "=",
-                cookies = window.document.cookie.split(';');
-            for (i = 0, len = cookies.length; i < len; i = i + 1) {
-                c = cookies[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1, c.length);
-                }
-                if (c.indexOf(nameEQ) === 0) {
-                    return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
-                }
-            }
-            return {};
-        },
-        getCookieByKey: function (key) {
-            var cookieCollection = this.getCookie('timerMultiTab');
-            if (cookieCollection.hasOwnProperty(key)) {
-                return cookieCollection[key];
-            }
-            return '';
-        },
-        setCookieByKey: function (key, value) {
-            var cookieCollection = this.getCookie('timerMultiTab'),
-                t = new Date();
-
-            cookieCollection[key] = value;
-            document.cookie = "timerMultiTab=" + JSON.stringify(cookieCollection)
-                + "; expires="
-                + (new Date(t.getFullYear(),
-                            t.getMonth(),
-                            t.getDate(),
-                            t.getHours() + 2,
-                            t.getMinutes(),
-                            0)).toGMTString()
-                + "; path=/"
-                + "; domain=127.0.0.1";
-        },
-        incContinueClickCnt: function () {
-            var strClickCont = this.getCookieByKey('nClickCont');
+        clickContinue: function () {
+            var strClickCont = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont');
             if (strClickCont === '') {
                 strClickCont = '0';
             }
 
-            this.setCookieByKey(
+            cookieStore.prototype.setByKey(
+                'timerMultiTab',
                 'nClickCont',
-                (parseInt(strClickCont, 10) + 1).toString()
+                (parseInt(strClickCont, 10) + 1).toString(),
+                '127.0.0.1'
             );
         }
     };
     
-    $timerMultitab.factory = function (name, warningSecs, expiringSecs, mode) {
+    timerMultitab.factory = function (name, warningSecs, expiringSecs, mode) {
         var self = this;
         self.name = name;
         self.mode = mode || "release";
-        self.timer = $timer(warningSecs, expiringSecs);
+        self.timer = timer(warningSecs, expiringSecs);
+        cookieStore.prototype.setByKey('timerMultiTab', 'bSessionExpired', false, '127.0.0.1');
+
         self.multitab = {
             nClickCont: 0,
             nClickContCookie: 0
@@ -277,10 +299,10 @@
         };
     };
     
-    $timerMultitab.factory.prototype = $timerMultitab.prototype;
+    timerMultitab.factory.prototype = timerMultitab.prototype;
     
-    if (global && !global.$timerMultitab) {
-        global.$timerMultitab = $timerMultitab;
+    if (global && !global.timerMultitab) {
+        global.timerMultitab = timerMultitab;
     }
     
-}(window, jQuery, window.$timer));
+}(window, jQuery, window.timer, window.cookieStore));
