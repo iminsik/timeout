@@ -158,7 +158,7 @@
     if (global && !global.timer) {
         global.timer = timer;
     }
-}(window, jQuery));
+}(window));
 
 (function (global, $, timer, cookieStore) {
     'use strict';
@@ -277,8 +277,7 @@
         cookieStore.prototype.setByKey('timerMultiTab', 'bSessionExpired', false, '127.0.0.1');
 
         self.multitab = {
-            nClickCont: 0,
-            nClickContCookie: 0
+            nClickCont: 0
         };
         
         // Initialize timer callback
