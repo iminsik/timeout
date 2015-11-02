@@ -70,13 +70,14 @@
     };
     
     timer.prototype = {
+        // determine how much time elapsed in msec.
         elapsedInMsec: function () {
-            // Convert both dates to milliseconds
+            // convert both dates to milliseconds
             try {
                 var t_start = this.countdownStarted.getTime(),
                     t_now = (new Date()).getTime(),
 
-                // Calculate the difference in milliseconds
+                    // calculate the difference in milliseconds
                     delta_msec = t_now - t_start;
                 return delta_msec;
             } catch (e) {
@@ -84,44 +85,34 @@
                 return 0;
             }
         },
-        isDone: function () {
+        // determine if time has passed.
+        isExpired: function () {
             return this.elapsedInMsec()
 				> this.sessionTimeoutInMsec;
         },
+        // determine if warning time has come.
         isWarningThresholdReached: function () {
             return this.elapsedInMsec()
 				>= this.sessionTimeoutWarningHappensInMsec;
         },
+        // determine how much time is left until expiring.
         timeLeft: function () {
             return Math.floor(Math.max(0,
 									   (this.sessionTimeoutInMsec
 										- this.elapsedInMsec()))
 							  / 1000);
         },
+        // determine time settings are all valid.
         isSettingsValid: function () {
-            if (typeof this.sessionTimeoutInMsec !== 'number') {
-                global.console.log(this.ERRORS.POSITIVESESSIONTIMEOUT);
-                return false;
+            var i = 0, len = 0;
+            for (i = 0, len = this.validSettingFunctions.length; i < len; i = i + 1) {
+                if (this.validSettingFunctions[i].isValid.apply(this) === false) {
+                    return this.validSettingFunctions[i].msg.apply(this);
+                }
             }
-            if (this.sessionTimeoutInMsec <= 0) {
-                global.console.log(this.ERRORS.NONEZEROTIMEOUT);
-                return false;
-            }
-            if (typeof this.sessionTimeoutWarningHappensInMsec !== 'number') {
-                global.console.log(this.ERRORS.POSITIVEWARNINGTIME);
-                return false;
-            }
-            if (this.sessionTimeoutWarningHappensInMsec <= 0) {
-                global.console.log(this.ERRORS.NONWARNINGTIME);
-                return false;
-            }
-            if (this.sessionTimeoutWarningHappensInMsec >= this.sessionTimeoutInMsec) {
-                global.console.log(this.ERRORS.WARNINGSMALLERTHANTIMEOUT);
-                return false;
-            }
-
             return true;
         },
+        // reset Timer configuration
         reset: function () {
             if (this.isResettingSession) { return; }
 
@@ -130,9 +121,26 @@
             this.countdownStarted = new Date();   // start the countdown timer
             this.sessionHasTimedout = false;
             this.isResettingSession = false;
+        },
+        // determine total percent complete, ie., ratio of 'elapsed time' to 'time session is active'
+        // UI will want to respond to this countdown
+        totalCountdownPercentComplete: function () {
+            return Math.floor(100 *
+                             (this.timer.elapsedInMsec()
+                              / this.timer.sessionTimeoutInMsec));
+        },
+        // determine warning percent complete,
+        // ie., ratio of 'elapsed time' to 'time to wait before warning'
+        // UI may want to respond to this countdown
+        warningCountdownPercentComplete: function () {
+            return Math.floor(100 * ((this.timer.elapsedInMsec()
+                                 - this.timer.sessionTimeoutWarningHappensInMsec)
+                / (this.timer.sessionTimeoutInMsec
+                   - this.timer.sessionTimeoutWarningHappensInMsec)));
         }
     };
     
+    // Error constants.
     timer.prototype.ERRORS = {
         POSITIVESESSIONTIMEOUT: 'Session timeout must be a positive number.',
         NONZEROTIMEOUT: 'Session timeout can\'t be zero or negative.',
@@ -140,6 +148,29 @@
         NONWARNINGTIME: 'Session timeout warning can\'t be zero or negative.',
         WARNINGSMALLERTHANTIMEOUT: 'Session timeout warning must be smaller than Session timeout.'
     };
+    timer.prototype.validSettingFunctions = [
+        {
+            isValid: function () { return typeof this.sessionTimeoutInMsec !== 'number'; },
+            msg: function () { return this.ERRORS.POSITIVESESSIONTIMEOUT; }
+        },
+        {
+            isValid: function () { return this.sessionTimeoutInMsec <= 0; },
+            msg: function () { return this.ERRORS.NONZEROTIMEOUT; }
+        },
+        {
+            isValid: function () { return typeof this.sessionTimeoutWarningHappensInMsec !== 'number'; },
+            msg: function () { return this.ERRORS.POSITIVEWARNINGTIME; }
+        },
+        {
+            isValid: function () { return this.sessionTimeoutWarningHappensInMsec <= 0; },
+            msg: function () { return this.ERRORS.NONWARNINGTIME; }
+        },
+        {
+            isValid: function () { return this.sessionTimeoutWarningHappensInMsec >= this.sessionTimeoutInMsec; },
+            msg: function () { return this.ERRORS.WARNINGSMALLERTHANTIMEOUT; }
+        }
+    ];
+
 
     timer.factory = function (warningSecs, expiringSecs) {
         this.count = 1;
@@ -147,8 +178,6 @@
         this.sessionTimeoutInMsec = expiringSecs * 1000;  // 20 mins - 3 secs
         this.sessionTimeoutWarningHappensInMsec = warningSecs * 1000;  // 20 mins - 23 secs
         this.countdownStarted = null;
-        this.totalCountdownPercentComplete = 0;
-        this.warningCountdownPercentComplete = 0;
         this.sessionHasTimedout = false;
         this.isResettingSession = false;
     };
@@ -162,8 +191,8 @@
 
 (function (global, $, timer, cookieStore) {
     'use strict';
-    var timerMultitab = function (name, warningSecs, expiringSecs, mode) {
-        return new timerMultitab.factory(name, warningSecs, expiringSecs, mode);
+    var timerMultitab = function (name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb) {
+        return new timerMultitab.factory(name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb);
     };
     
     timerMultitab.prototype = {
@@ -175,9 +204,10 @@
         },
         timerEventStart: function () {
             var self = this, startDeferred;
-            this.timer.countdownStarted = new Date();   // start the countdown timer
-            // fire delayed event
+            this.timer.countdownStarted = new Date();
 
+            // start the countdown timer
+            // fire delayed event
             startDeferred = function () {
                 if (self.timer.isSettingsValid() === false) {
                     return;
@@ -192,68 +222,56 @@
             startDeferred();
         },
         timerEventCheck: function () {
-            // determine total percent complete, ie., ratio of 'elapsed time' to 'time session is active'
-            // UI will want to respond to this countdown
-            this.timer.totalCountdownPercentComplete
-                = Math.floor(100 *
-                             (this.timer.elapsedInMsec()
-                              / this.timer.sessionTimeoutInMsec));
-
-            // determine warning percent complete, 
-            // ie., ratio of 'elapsed time' to 'time to wait before warning'
-            // UI may want to respond to this countdown
-            this.timer.warningCountdownPercentComplete
-                = Math.floor(100 * ((this.timer.elapsedInMsec()
-                                     - this.timer.sessionTimeoutWarningHappensInMsec)
-                    / (this.timer.sessionTimeoutInMsec
-                       - this.timer.sessionTimeoutWarningHappensInMsec)));
-
+            var nCurrentClickCont,
+                bSessionExpiredCookie;
+            // increase time count
             this.timer.count = this.timer.count + 1;
 
-            if (this.timer.isDone() || cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired') === true) {
-                this.resetCookie();
-
-                // finish and cleanup
+            if (this.timer.isExpired()
+                    || cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired') === true) {
+                // if time has passed, finish and cleanup
                 this.timer.sessionHasTimedout = true;
+                this.resetMultitabConfig();
 
                 if (typeof this.doneCallback !== 'undefined'
                         && this.mode.toLowerCase() !== 'release') {
+                    // 1. USER-DEFINABLE DONE CALLBACK
                     this.doneCallback();
                 }
-                return;
-            }
-
-            //raise callback so client can update its UI
-            if (typeof this.timerEventIdle !== 'undefined'
-                    && this.mode.toLowerCase() !== 'release') {
-                this.timerEventIdle(this.timer.isDone(),
-                                this.timer.isWarningThresholdReached());
-            }
-        },
-        timerEventIdle: function (isDone, isWarningTimeMet) {
-            var nClickContCookie = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont'),
-                bSessionExpiredCookie = cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired');
-            // reset the Session, if 'Continue' button is hit in another tab.
-            if (this.multitab.nClickCont < nClickContCookie) {
-                this.multitab.nClickCont = nClickContCookie;
-
-                // Define continueCallback 
-                this.timerEventRestart();
             } else {
-                //show message if warning time is reached.
-                if (isWarningTimeMet) {
-                    this.afterWarningCallback();
-                } else {
-                    this.beforeWarningCallback();
+                // otherwise, keep checking
+                nCurrentClickCont = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont');
+                bSessionExpiredCookie = cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired');
+
+                // raise callback so client can update its UI
+                if (this.mode.toLowerCase() !== 'release') {
+
+                    // reset the Session, if 'Continue' button is hit in another tab.
+                    if (this.multitab.nClickCont < nCurrentClickCont) {
+                        this.multitab.nClickCont = nCurrentClickCont;
+
+                        // define continueCallback
+                        this.timerEventRestart();
+                    } else {
+                        // show message if warning time is reached.
+                        if (this.timer.isWarningThresholdReached()) {
+                            // 2. USER-DEFINABLE AFTERWARNING CALLBACK
+                            this.afterWarningCallback();
+                        } else {
+                            // 3. USER-DEFINABLE BEFOREWARNING CALLBACK
+                            this.beforeWarningCallback();
+                        }
+                    }
                 }
             }
         },
-        // Cookie Library
-        resetCookie: function () {
+        // reset Multitab local variable and cookies.
+        resetMultitabConfig: function () {
             this.multitab.nClickCont = 0;
             cookieStore.prototype.setByKey('timerMultiTab', 'bSessionExpired', true, '127.0.0.1');
             cookieStore.prototype.setByKey('timerMultiTab', 'nClickCont', '0', '127.0.0.1');
         },
+        // behave like it, when user clicks 'Continue' button.
         clickContinue: function () {
             var strClickCont = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont');
             if (strClickCont === '') {
@@ -269,7 +287,7 @@
         }
     };
     
-    timerMultitab.factory = function (name, warningSecs, expiringSecs, mode) {
+    timerMultitab.factory = function (name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb) {
         var self = this;
         self.name = name;
         self.mode = mode || "release";
@@ -280,21 +298,20 @@
             nClickCont: 0
         };
         
-        // Initialize timer callback
-        self.beforeWarningCallback = function () {
+        // initialize timer callback
+        self.beforeWarningCallback = beforecb || function () {
             console.log(this.name + ' ' + this.timer.timeLeft()
                         + ': called Before warning callback.');
         };
-        
-        self.afterWarningCallback = function () {
+        self.afterWarningCallback = aftercb || function () {
             console.log(this.name + ' ' + this.timer.timeLeft()
                         + ': called After warning callback.');
         };
-        self.doneCallback = function () {
-            console.log(this.name + ' ' + "time passed.");
-        };
-        self.continueCallback = function () {
+        self.continueCallback = contcb || function () {
             console.log(this.name + ' ' + "is continued.");
+        };
+        self.doneCallback = donecb || function () {
+            console.log(this.name + ' ' + "time passed.");
         };
     };
     
