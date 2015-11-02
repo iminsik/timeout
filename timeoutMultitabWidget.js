@@ -9,7 +9,6 @@
     var cookieStore = function () {
         return new cookieStore.factory();
     };
-    
     cookieStore.prototype = {
         getCookie: function (name) {
             var i, len, c,
@@ -50,11 +49,9 @@
                 + "; domain=" + domain;
         }
     };
-    
     cookieStore.factory = function () {
         
     };
-
     cookieStore.factory.prototype = cookieStore.prototype;
 
     if (global && !global.cookieStore) {
@@ -68,7 +65,6 @@
     var timer = function (warningSecs, expiringSecs) {
         return new timer.factory(warningSecs, expiringSecs);
     };
-    
     timer.prototype = {
         // determine how much time elapsed in msec.
         elapsedInMsec: function () {
@@ -171,7 +167,6 @@
         }
     ];
 
-
     timer.factory = function (warningSecs, expiringSecs) {
         this.count = 1;
         this.pollTimeInMsec = 1000;  // 1 sec
@@ -181,7 +176,6 @@
         this.sessionHasTimedout = false;
         this.isResettingSession = false;
     };
-    
     timer.factory.prototype = timer.prototype;
 
     if (global && !global.timer) {
