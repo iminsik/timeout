@@ -287,8 +287,12 @@
                         if (self.multitab.nClickCont < nCurrentClickCont) {
                             self.multitab.nClickCont = nCurrentClickCont;
 
-                            // define continueCallback
-                            self.timerEventRestart();
+                            // reset timer
+                            self.timer.reset();
+                            // 3. USER DEFINABLE CONTINUE CALLBACK
+                            if (typeof self.continueCallback === 'function') {
+                                self.continueCallback();
+                            }
                         } else {
                             // show message if warning time is reached.
                             if (!self.timer.isWarningThresholdReached()) {
@@ -314,6 +318,10 @@
         setAfterWarningCallback: function (cb) {
             var self = this;
             self.afterWarningCallback = cb;
+        },
+        setDoneCallback: function (cb) {
+            var self = this;
+            self.doneCallback = cb;
         }
     };
     
