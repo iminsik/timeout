@@ -205,7 +205,10 @@
                                                  self.afterWarningCallback,
                                                  self.doneCallback);
 
-            this.timer.countdownStarted = new Date();
+            self.timer.countdownStarted = new Date();
+
+            // starting a new timer means clicking 'continue' button.
+            self.clickContinue();
 
             // start the countdown timer
             // fire delayed event
@@ -270,7 +273,7 @@
                     // 4. USER-DEFINABLE DONE CALLBACK
                     if (typeof donecb === 'function'
                             && self.mode.toLowerCase() !== 'release') {
-                        donecb.apply(self);
+                        donecb();
                     }
                 } else {
                     // otherwise, keep checking
@@ -291,12 +294,12 @@
                             if (!self.timer.isWarningThresholdReached()) {
                                 // 1. USER-DEFINABLE BEFOREWARNING CALLBACK
                                 if (typeof beforewarningcb === 'function') {
-                                    beforewarningcb.apply(self);
+                                    beforewarningcb();
                                 }
                             } else {
                                 // 2. USER-DEFINABLE AFTERWARNING CALLBACK
                                 if (typeof afterwarningcb === 'function') {
-                                    afterwarningcb.apply(self);
+                                    afterwarningcb();
                                 }
                             }
                         }
@@ -319,18 +322,18 @@
         
         // initialize timer callback
         self.beforeWarningCallback = beforecb || function () {
-            console.log(this.name + ' ' + this.timer.timeLeft()
+            console.log(self.name + ' ' + self.timer.timeLeft()
                         + ': called Before warning callback.');
         };
         self.afterWarningCallback = aftercb || function () {
-            console.log(this.name + ' ' + this.timer.timeLeft()
+            console.log(self.name + ' ' + self.timer.timeLeft()
                         + ': called After warning callback.');
         };
         self.continueCallback = contcb || function () {
-            console.log(this.name + ' ' + "is continued.");
+            console.log(self.name + ' ' + "is continued.");
         };
         self.doneCallback = donecb || function () {
-            console.log(this.name + ' ' + "time passed.");
+            console.log(self.name + ' ' + "time passed.");
         };
     };
     timerMultitab.factory.prototype = timerMultitab.prototype;
