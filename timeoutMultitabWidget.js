@@ -189,6 +189,11 @@
     }
 }(window));
 
+// Multitab timer with callbacks, i.e.:
+//  beforewarning callback
+//  afterwarning callback
+//  continue callback
+//  done callback
 (function (global, $, timer, cookieStore) {
     'use strict';
     var timerMultitab = function (name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb) {
@@ -196,14 +201,16 @@
     };
     
     timerMultitab.prototype = {
-        timerEventRestart: function () {
-            this.timer.reset();
-            if (typeof this.continueCallback !== 'undefined') {
-                this.continueCallback();
-            }
-        },
         timerEventStart: function () {
-            var self = this, startDeferred;
+            var self = this,
+                startDeferred;
+
+            // create timercheck callback with event callbacks
+            self.timercheckcallback
+                = self.timerEventCheckGenerator(self.beforeWarningCallback,
+                                                 self.afterWarningCallback,
+                                                 self.doneCallback);
+
             this.timer.countdownStarted = new Date();
 
             // start the countdown timer
@@ -212,7 +219,7 @@
                 if (self.timer.isSettingsValid() === false) {
                     return;
                 }
-                self.timerEventCheck();
+                self.timercheckcallback();
                 if (self.timer.sessionHasTimedout === false) {
                     setTimeout(startDeferred,
                                self.timer.pollTimeInMsec);
@@ -221,48 +228,12 @@
 
             startDeferred();
         },
-        timerEventCheck: function () {
-            var nCurrentClickCont,
-                bSessionExpiredCookie;
-            // increase time count
-            this.timer.count = this.timer.count + 1;
-
-            if (this.timer.isExpired()
-                    || cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired') === true) {
-                // if time has passed, finish and cleanup
-                this.timer.sessionHasTimedout = true;
-                this.resetMultitabConfig();
-
-                if (typeof this.doneCallback !== 'undefined'
-                        && this.mode.toLowerCase() !== 'release') {
-                    // 1. USER-DEFINABLE DONE CALLBACK
-                    this.doneCallback();
-                }
-            } else {
-                // otherwise, keep checking
-                nCurrentClickCont = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont');
-                bSessionExpiredCookie = cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired');
-
-                // raise callback so client can update its UI
-                if (this.mode.toLowerCase() !== 'release') {
-
-                    // reset the Session, if 'Continue' button is hit in another tab.
-                    if (this.multitab.nClickCont < nCurrentClickCont) {
-                        this.multitab.nClickCont = nCurrentClickCont;
-
-                        // define continueCallback
-                        this.timerEventRestart();
-                    } else {
-                        // show message if warning time is reached.
-                        if (this.timer.isWarningThresholdReached()) {
-                            // 2. USER-DEFINABLE AFTERWARNING CALLBACK
-                            this.afterWarningCallback();
-                        } else {
-                            // 3. USER-DEFINABLE BEFOREWARNING CALLBACK
-                            this.beforeWarningCallback();
-                        }
-                    }
-                }
+        // restart timer.
+        timerEventRestart: function () {
+            this.timer.reset();
+            // 3. USER DEFINABLE CONTINUE CALLBACK
+            if (typeof this.continueCallback === 'function') {
+                this.continueCallback();
             }
         },
         // reset Multitab local variable and cookies.
@@ -284,6 +255,60 @@
                 (parseInt(strClickCont, 10) + 1).toString(),
                 '127.0.0.1'
             );
+        },
+        // generate timer check callback will be called by 'settimeout'.
+        timerEventCheckGenerator: function (beforewarningcb,
+                                            afterwarningcb,
+                                            donecb) {
+            var self = this;
+            return function () {
+                var nCurrentClickCont,
+                    bSessionExpiredCookie;
+                // increase time count
+                self.timer.count = this.timer.count + 1;
+
+                if (self.timer.isExpired()
+                        || cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired') === true) {
+                    // if time has passed, finish and cleanup
+                    self.timer.sessionHasTimedout = true;
+                    self.resetMultitabConfig();
+
+                    // 4. USER-DEFINABLE DONE CALLBACK
+                    if (typeof donecb === 'function'
+                            && self.mode.toLowerCase() !== 'release') {
+                        donecb.apply(self);
+                    }
+                } else {
+                    // otherwise, keep checking
+                    nCurrentClickCont = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont');
+                    bSessionExpiredCookie = cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired');
+
+                    // raise callback so client can update its UI
+                    if (self.mode.toLowerCase() !== 'release') {
+
+                        // reset the Session, if 'Continue' button is hit in another tab.
+                        if (self.multitab.nClickCont < nCurrentClickCont) {
+                            self.multitab.nClickCont = nCurrentClickCont;
+
+                            // define continueCallback
+                            self.timerEventRestart();
+                        } else {
+                            // show message if warning time is reached.
+                            if (!self.timer.isWarningThresholdReached()) {
+                                // 1. USER-DEFINABLE BEFOREWARNING CALLBACK
+                                if (typeof beforewarningcb === 'function') {
+                                    beforewarningcb.apply(self);
+                                }
+                            } else {
+                                // 2. USER-DEFINABLE AFTERWARNING CALLBACK
+                                if (typeof afterwarningcb === 'function') {
+                                    afterwarningcb.apply(self);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
         }
     };
     
