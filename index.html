@@ -1,8 +1,19 @@
 <html>
-    <head><title>Hello</title></head>
+    <head>
+        <title>Hello</title>
+        <style type="text/css">
+            button {
+                font-size: 20px;
+            }
+        </style>
+    </head>
     <body>
-        <input type='button' id='Timer1Cont' value='Continue Timer 1!' /><br />
-        <input type='button' id='Timer2Cont' value='Continue Timer 2!' />
+        Continue <br />
+        <input type='button' id='Timer0Cont' value='Timer 0!' /><span id="Timeleft0"></span><br />
+        <input type='button' id='Timer1Cont' value='Timer 1!' /><span id="Timeleft1"></span><br />
+        <input type='button' id='Timer2Cont' value='Timer 2!' /><span id="Timeleft2"></span><br />
+        <input type='button' id='Timer3Cont' value='Timer 3!' /><span id="Timeleft3"></span><br />
+        <input type='button' id='Timer4Cont' value='Timer 4!' /><span id="Timeleft4"></span>
 
         <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="./timeoutMultitabWidget.js"></script>

@@ -306,6 +306,14 @@
                     }
                 }
             };
+        },
+        setBeforeWarningCallback: function (cb) {
+            var self = this;
+            self.beforeWarningCallback = cb;
+        },
+        setAfterWarningCallback: function (cb) {
+            var self = this;
+            self.afterWarningCallback = cb;
         }
     };
     
