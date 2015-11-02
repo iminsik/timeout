@@ -49,6 +49,7 @@
                 + "; domain=" + domain;
         }
     };
+
     cookieStore.factory = function () {
         
     };
@@ -193,7 +194,6 @@
     var timerMultitab = function (name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb) {
         return new timerMultitab.factory(name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb);
     };
-    
     timerMultitab.prototype = {
         timerEventStart: function () {
             var self = this,
@@ -333,7 +333,6 @@
             console.log(this.name + ' ' + "time passed.");
         };
     };
-    
     timerMultitab.factory.prototype = timerMultitab.prototype;
     
     if (global && !global.timerMultitab) {
