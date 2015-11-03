@@ -279,9 +279,7 @@
             utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', strClickCont + 1, '127.0.0.1');
         },
         // generate timer check callback will be called by 'settimeout'.
-        timerEventCheckGenerator: function (beforewarningcb,
-                                            afterwarningcb,
-                                            donecb) {
+        timerEventCheckGenerator: function (beforewarningcb, afterwarningcb, donecb) {
             var self = this;
             return function () {
                 var nCurrentClickCont, bSessionExpiredCookie;
