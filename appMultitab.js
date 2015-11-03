@@ -24,7 +24,9 @@ var warningHelper = function (i, timer, mode) {
         if (mode === 'beforewarningcallback') {
             $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft()).css('color', 'black');
             
-            $('#sessionSection').hide();
+            if (typeof $.showLightBox === 'function') {
+                $('#sessionSection').hide();
+            }
         } else if (mode === 'afterwarningcallback') {
             $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft() + ' WARNING!!!').css('color', 'red');
 
@@ -42,43 +44,46 @@ var warningHelper = function (i, timer, mode) {
                     }
                 }).show();
                 $('#sessionTimeLeft').text(timer.timer.timeleft() + ' seconds');
+                $('#sessionSection').attr('tabindex', '0').focus();
             }
-            $('#sessionSection').attr('tabindex', '0').focus();
-            
         } else if (mode === 'donecallback') {
             $('#Timeleft' + i).text('Time has flied.').css('color', 'red');
             
-            $('#sessionExpiring').text('Session Expired').css({ color: 'red' });
-            $('#sessionKeepActive').css({ visibility: 'hidden' });
-            $('#sessionContinue').css({ visibility: 'hidden' });
+            if (typeof $.showLightBox === 'function') {
+                $('#sessionExpiring').text('Session Expired').css({ color: 'red' });
+                $('#sessionKeepActive').css({ visibility: 'hidden' });
+                $('#sessionContinue').css({ visibility: 'hidden' });
 
-            $.ajax({
-                // This url will force the user to sign out.
-                url: '//www.alaskaair.com/services/v1/loginvalidator/Logout',
-                type: 'POST',
-                data: { t: (new Date()).getDate() },
-                success: function (data) {
-                    $('#sessionWillExpire')
-                        .html('Your session expired at <b>'
-                              + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
-                              + '</b>');
-                    // Move to SignIn Page.
-                    if (RedirectURL !== '') {
-                        window.location.href = RedirectURL;
-                    } else if (hasRefreshElement) {
-                        $('#CheckOutExpirationTimestamp').val($('#CheckOutExpiredTimestamp').val());
-                        document.getElementById('Refresh').click();
-                    } else { // We may refresh the page not to show outdated login status
-                        window.location.reload();
+                $.ajax({
+                    // This url will force the user to sign out.
+                    url: '//www.alaskaair.com/services/v1/loginvalidator/Logout',
+                    type: 'POST',
+                    data: { t: (new Date()).getDate() },
+                    success: function (data) {
+                        $('#sessionWillExpire')
+                            .html('Your session expired at <b>'
+                                  + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
+                                  + '</b>');
+                        // Move to SignIn Page.
+                        if (RedirectURL !== '') {
+                            window.location.href = RedirectURL;
+                        } else if (hasRefreshElement) {
+                            $('#CheckOutExpirationTimestamp').val($('#CheckOutExpiredTimestamp').val());
+                            document.getElementById('Refresh').click();
+                        } else { // We may refresh the page not to show outdated login status
+                            window.location.reload();
+                        }
                     }
-                }
-            });
-        } else if (mode === 'continuecallback') {
-            if ($.hideLightBoxes) {
-                $.hideLightBoxes();
+                });
             }
-            if ($.hideFormFiller) {
-                $.hideFormFiller();
+        } else if (mode === 'continuecallback') {
+            if (typeof $.showLightBox === 'function') {
+                if ($.hideLightBoxes) {
+                    $.hideLightBoxes();
+                }
+                if ($.hideFormFiller) {
+                    $.hideFormFiller();
+                }
             }
         }
     };
