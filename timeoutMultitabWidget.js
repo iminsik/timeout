@@ -6,10 +6,20 @@
 // Cookie Store
 (function (global, document) {
     'use strict';
-    var cookieStore = function () {
-        return new cookieStore.factory();
+    var utilities = function () {
+        return new utilities.factory();
     };
-    cookieStore.prototype = {
+    utilities.prototype = {
+        setOmniture: function (domain, linkTrackVar, linkTrackEvent, category, event) {
+            if (s_gi) {
+                var s = s_gi(domain);
+                s.linkTrackVars = linkTrackVar;
+                s.linkTrackEvents = linkTrackEvent;
+                s.prop16 = category + '::' + event;
+                s.tl(this, 'o', s.prop16);
+                s.prop16 = '';
+            }
+        },
         getCookie: function (name) {
             var i, len, c,
                 nameEQ = name + "=",
@@ -25,14 +35,14 @@
             }
             return {};
         },
-        getByKey: function (store, key) {
+        getCookieByKey: function (store, key) {
             var cookieCollection = this.getCookie(store);
             if (cookieCollection.hasOwnProperty(key)) {
                 return cookieCollection[key];
             }
-            return '';
+            return null;
         },
-        setByKey: function (store, key, value, domain) {
+        setCookieByKey: function (store, key, value, domain) {
             var cookieCollection = this.getCookie(store),
                 t = new Date();
 
@@ -50,13 +60,13 @@
         }
     };
 
-    cookieStore.factory = function () {
+    utilities.factory = function () {
         
     };
-    cookieStore.factory.prototype = cookieStore.prototype;
+    utilities.factory.prototype = utilities.prototype;
 
-    if (global && !global.cookieStore) {
-        global.cookieStore = cookieStore;
+    if (global && !global.utilities) {
+        global.utilities = utilities;
     }
 }(window, document));
 
@@ -189,7 +199,7 @@
 //  afterwarning callback
 //  continue callback
 //  done callback
-(function (global, $, timer, cookieStore) {
+(function (global, $, timer, utilities) {
     'use strict';
     var timerMultitab = function (name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb) {
         return new timerMultitab.factory(name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb);
@@ -236,22 +246,17 @@
         // reset Multitab local variable and cookies.
         expireMultitabConfig: function () {
             this.multitab.nClickCont = 0;
-            cookieStore.prototype.setByKey('timerMultiTab', 'bSessionExpired', true, '127.0.0.1');
-            cookieStore.prototype.setByKey('timerMultiTab', 'nClickCont', '0', '127.0.0.1');
+            utilities.prototype.setCookieByKey('timerMultiTab', 'bSessionExpired', true, '127.0.0.1');
+            utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', 0, '127.0.0.1');
         },
         // behave like it, when user clicks 'Continue' button.
         clickContinue: function () {
-            var strClickCont = cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont');
-            if (strClickCont === '') {
-                strClickCont = '0';
+            var strClickCont = utilities.prototype.getCookieByKey('timerMultiTab', 'nClickCont');
+            if (strClickCont === null) {
+                strClickCont = 0;
             }
 
-            cookieStore.prototype.setByKey(
-                'timerMultiTab',
-                'nClickCont',
-                (parseInt(strClickCont, 10) + 1).toString(),
-                '127.0.0.1'
-            );
+            utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', strClickCont + 1, '127.0.0.1');
         },
         // generate timer check callback will be called by 'settimeout'.
         timerEventCheckGenerator: function (beforewarningcb,
@@ -264,7 +269,7 @@
                 self.timer.count = this.timer.count + 1;
 
                 if (self.timer.isExpired()
-                        || cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired') === true) {
+                        || utilities.prototype.getCookieByKey('timerMultiTab', 'bSessionExpired') === true) {
                     // if time has passed, finish and cleanup
                     self.timer.sessionHasTimedout = true;
                     self.expireMultitabConfig();
@@ -276,8 +281,8 @@
                     }
                 } else {
                     // otherwise, keep checking
-                    nCurrentClickCont = parseInt(cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont'), 10);
-                    bSessionExpiredCookie = cookieStore.prototype.getByKey('timerMultiTab', 'bSessionExpired');
+                    nCurrentClickCont = utilities.prototype.getCookieByKey('timerMultiTab', 'nClickCont');
+                    bSessionExpiredCookie = utilities.prototype.getCookieByKey('timerMultiTab', 'bSessionExpired');
 
                     // raise callback so client can update its UI
                     if (self.mode.toLowerCase() !== 'release') {
@@ -336,9 +341,9 @@
         self.name = name;
         self.mode = mode || "release";
         self.timer = timer(warningSecs, expiringSecs);
-        cookieStore.prototype.setByKey('timerMultiTab', 'bSessionExpired', false, '127.0.0.1');
-        if (cookieStore.prototype.getByKey('timerMultiTab', 'nClickCont') === '') {
-            cookieStore.prototype.setByKey('timerMultiTab', 'nClickCont', '0', '127.0.0.1');
+        utilities.prototype.setCookieByKey('timerMultiTab', 'bSessionExpired', false, '127.0.0.1');
+        if (utilities.prototype.getCookieByKey('timerMultiTab', 'nClickCont') === null) {
+            utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', 0, '127.0.0.1');
         }
 
         self.multitab = {
@@ -367,4 +372,4 @@
         global.timerMultitab = timerMultitab;
     }
     
-}(window, jQuery, window.timer, window.cookieStore));
+}(window, jQuery, window.timer, window.utilities));
