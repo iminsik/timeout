@@ -259,8 +259,7 @@
                                             donecb) {
             var self = this;
             return function () {
-                var nCurrentClickCont,
-                    bSessionExpiredCookie;
+                var nCurrentClickCont, bSessionExpiredCookie;
                 // increase time count
                 self.timer.count = this.timer.count + 1;
 
@@ -287,8 +286,7 @@
                         if (self.multitab.nClickCont < nCurrentClickCont) {
                             self.multitab.nClickCont = nCurrentClickCont;
 
-                            // reset timer
-                            self.timer.reset();
+                            self.timer.reset(); // reset timer
                             // 3. USER DEFINABLE CONTINUE CALLBACK
                             if (typeof self.continueCallback === 'function') {
                                 self.continueCallback();
