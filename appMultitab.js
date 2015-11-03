@@ -31,12 +31,14 @@ var warningHelper = function (i, timer, mode) {
 };
 
 for (i = 0, len = timerSettings.length; i < len; i = i + 1) {
-    timers.push(window.timerMultitab(
-        timerSettings[i].name,
-        timerSettings[i].warningTime,
-        timerSettings[i].expiringTime,
-        timerSettings[i].mode
-    ));
+    timers.push(
+        window.timerMultitab(
+            timerSettings[i].name,
+            timerSettings[i].warningTime,
+            timerSettings[i].expiringTime,
+            timerSettings[i].mode
+        )
+    );
     timers[i].setBeforeWarningCallback(warningHelper(i, timers[i], 'beforewarningcallback'));
     timers[i].setAfterWarningCallback(warningHelper(i, timers[i], 'afterwarningcallback'));
     timers[i].setDoneCallback(warningHelper(i, timers[i], 'donecallback'));
