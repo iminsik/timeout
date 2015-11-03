@@ -17,13 +17,17 @@ var clickHelper = function (timer) {
     };
 };
 
+/*global RedirectURL, hasRefreshElement */
 var warningHelper = function (i, timer, mode) {
     'use strict';
     return function () {
         if (mode === 'beforewarningcallback') {
             $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft()).css('color', 'black');
+            
+            $('#sessionSection').hide();
         } else if (mode === 'afterwarningcallback') {
             $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft() + ' WARNING!!!').css('color', 'red');
+
             if (typeof $.showLightBox === 'function') {
                 $('#sessionSection').filter(function () {
                     return ($(this).css('display') === 'none');
@@ -37,11 +41,45 @@ var warningHelper = function (i, timer, mode) {
                         // as.stnw.extendSession(); // Extend Session
                     }
                 }).show();
+                $('#sessionTimeLeft').text(timer.timer.timeleft() + ' seconds');
             }
             $('#sessionSection').attr('tabindex', '0').focus();
             
         } else if (mode === 'donecallback') {
             $('#Timeleft' + i).text('Time has flied.').css('color', 'red');
+            
+            $('#sessionExpiring').text('Session Expired').css({ color: 'red' });
+            $('#sessionKeepActive').css({ visibility: 'hidden' });
+            $('#sessionContinue').css({ visibility: 'hidden' });
+
+            $.ajax({
+                // This url will force the user to sign out.
+                url: '//www.alaskaair.com/services/v1/loginvalidator/Logout',
+                type: 'POST',
+                data: { t: (new Date()).getDate() },
+                success: function (data) {
+                    $('#sessionWillExpire')
+                        .html('Your session expired at <b>'
+                              + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
+                              + '</b>');
+                    // Move to SignIn Page.
+                    if (RedirectURL !== '') {
+                        window.location.href = RedirectURL;
+                    } else if (hasRefreshElement) {
+                        $('#CheckOutExpirationTimestamp').val($('#CheckOutExpiredTimestamp').val());
+                        document.getElementById('Refresh').click();
+                    } else { // We may refresh the page not to show outdated login status
+                        window.location.reload();
+                    }
+                }
+            });
+        } else if (mode === 'continuecallback') {
+            if ($.hideLightBoxes) {
+                $.hideLightBoxes();
+            }
+            if ($.hideFormFiller) {
+                $.hideFormFiller();
+            }
         }
     };
 };
@@ -55,13 +93,40 @@ for (i = 0, len = timerSettings.length; i < len; i = i + 1) {
             timerSettings[i].mode
         )
     );
-    timers[i].setBeforeWarningCallback(warningHelper(i, timers[i], 'beforewarningcallback'));
-    timers[i].setAfterWarningCallback(warningHelper(i, timers[i], 'afterwarningcallback'));
-    timers[i].setDoneCallback(warningHelper(i, timers[i], 'donecallback'));
+    timers[i]
+        .setBeforeWarningCallback(warningHelper(i, timers[i], 'beforewarningcallback'))
+        .setAfterWarningCallback(warningHelper(i, timers[i], 'afterwarningcallback'))
+        .setDoneCallback(warningHelper(i, timers[i], 'donecallback'))
+        .setContinueCallback(warningHelper(i, timers[i], 'continuecallback'));
+
     $('#Timer' + i + 'Cont').click(clickHelper(timers[i]));
     timers[i].timerEventStart();
 }
 
+// Inject partial view from Sitecore
+$.ajax({
+    url: '//' + 'www.alaskaair.com' + '/content/partial/session-timeout',
+    cache: false,
+    success: function (data) {
+        'use strict';
+        if (data.toLowerCase().indexOf("this page has taken off") === -1) {
+            $('body').append(data);
+
+            // Bind Continue events 
+            $('#sessionContinue').bind('click', function () {
+                var nClickCont = utilities.prototype.getCookieByKey('timerMultiTab', 'nClickCont');
+                // Setting omniture tags
+                utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
+
+                $.hideLightBoxes();
+                $.hideFormFiller();
+
+                utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', nClickCont + 1, '127.0.0.1');
+                // as.stnw.extendSession(); // Extend Session
+            });
+        }
+    }
+});
 /**********************************************
 // Inject partial view from Sitecore
 $.ajax({
@@ -84,68 +149,6 @@ $.ajax({
 
                 as.stnw.extendSession(); // Extend Session
             });
-
-            //define callback to timer events
-            stnw.ui_update_callback = function (timings, done, warning_time_met) {
-                // reset the Session, if 'Continue' button is hit in another tab.
-                if (as.stnw.nlastContinueClick < parseInt(as.stnw.getCookieByKey('nlastContinueClick'))) {
-                    if ($.hideLightBoxes) {
-                        $.hideLightBoxes();
-                    }
-                    if ($.hideFormFiller) {
-                        $.hideFormFiller();
-                    }
-                    as.stnw.nlastContinueClick++;
-                    as.stnw.continueSession();
-                }
-                else {
-                    //show UI if warning time is reached.
-                    if (warning_time_met) {
-                        
-                        // AS.COM/EASYBIZ Signout Signal
-                        if (as.stnw.getCookieByKey('bSessionExpired') === true) {
-                            stnw.isUserLoggedIn(null, as.stnw.done_callback);
-                        }
-                    }
-                    else {
-                        $('#sessionSection').hide();
-                    }
-
-                    $('#sessionTimeLeft').text(as.stnw.timeleft() + ' seconds');
-                }
-            };
-
-            as.stnw.done_callback = function () {
-                $('#sessionExpiring').text('Session Expired').css({ color: 'red' });
-                $('#sessionKeepActive').css({ visibility: 'hidden' });
-                $('#sessionContinue').css({ visibility: 'hidden' });
-
-                $.ajax({
-                    // This url will force the user to sign out.
-                    url: '//www.alaskaair.com/services/v1/loginvalidator/Logout',
-                    type: 'POST',
-                    data: { t: (new Date()).getDate() },
-                    success: function (data) {
-                        $('#sessionWillExpire').html(stnw.Done_Message());
-
-                        // Move to SignIn Page.
-                        if (stnw.RedirectURL !== '') {
-                            window.location.href = stnw.RedirectURL;
-                        }
-                        else if (stnw.hasRefreshElement) {
-                            $('#CheckOutExpirationTimestamp').val($('#CheckOutExpiredTimestamp').val());
-                            document.getElementById('Refresh').click();
-                        }
-                        // We may refresh the page not to show outdated login status
-                        else {
-                            window.location.reload();
-                        }
-                    },
-                    complete: function (jqXHR, textStatus, errorThrown) {
-                        stnw.setCookieByKey('bSessionExpired', true);
-                    }
-                });
-            };
 
             stnw.isUserLoggedIn = function (successCallback, failureCallback) {
                 $.ajax({

@@ -3,13 +3,33 @@
 // stnw library / start
 // --------------------
 
-// Cookie Store
-(function (global, document) {
+// Utilities
+(function (global, document, $) {
     'use strict';
     var utilities = function () {
         return new utilities.factory();
     };
     utilities.prototype = {
+        IsUserSignIn: function () {
+            $.ajax({
+                url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
+                success: function (data) {
+                    if (data.bLogin === true) {
+                        // Set User Type
+                        if (data.bEasyBiz === true) {
+                            global.console.log('EasyBiz Sign In');
+                        } else {
+                            global.console.log('Normal Sign In');
+                        }
+                    } else {
+                        global.console.log('Not Sign In');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    global.console.log('Endpoint got error!!!');
+                }
+            });
+        },
         setOmniture: function (domain, linkTrackVar, linkTrackEvent, category, event) {
             if (s_gi) {
                 var s = s_gi(domain);
@@ -68,7 +88,7 @@
     if (global && !global.utilities) {
         global.utilities = utilities;
     }
-}(window, document));
+}(window, document, jQuery));
 
 // Basic Timer & Events
 (function (global) {
