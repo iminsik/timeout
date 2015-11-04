@@ -1,4 +1,4 @@
-/*global $timer, console, $, utilities, s_gi*/
+/*global $timer, console, $, sessionUtilities, s_gi*/
 var i,
     len,
     sessions = [],
@@ -18,13 +18,29 @@ var i,
         onClose: function () {
             'use strict';
             // Setting omniture tags
-            utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Close');
+            sessionUtilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Close');
 
             // We need to call timer event ONLY HERE...
-            sessions[0].clickContinue();
+            if (sessions[0].sessionTimer.isExpired() === false) {
+                sessions[0].clickContinue();
+            }
             // as.stnw.extendSession(); // Extend Session
         }
     });
+
+var clickHelper = function (session) {
+    'use strict';
+    return function () {
+        if (session.sessionTimer.isExpired() === false) {
+            session.clickContinue();
+        }
+        if (typeof $.showLightBox === 'function') {
+            $.hideFormFiller();
+            timeoutlightbox.hide();
+            $('#sessionSection').hide();
+        }
+    };
+};
 
 $.hideFormFiller();
 timeoutlightbox.hide();
@@ -38,32 +54,19 @@ $('#sessionContinue').bind('click', function () {
     $('#sessionSection').hide();
 
     // Setting omniture tags
-    utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
+    sessionUtilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
 
     // We need to call timer event ONLY HERE...
     sessions[0].clickContinue();
     // as.stnw.extendSession(); // Extend Session
 });
 
-
-var clickHelper = function (timer) {
-    'use strict';
-    return function () {
-        timer.clickContinue();
-        if (typeof $.showLightBox === 'function') {
-            $.hideFormFiller();
-            timeoutlightbox.hide();
-            $('#sessionSection').hide();
-        }
-    };
-};
-
 /*global RedirectURL, hasRefreshElement */
-var warningHelper = function (i, timer, timeoutlightbox, mode) {
+var warningHelper = function (i, session, timeoutlightbox, mode) {
     'use strict';
     return function () {
         if (mode === 'beforewarningcallback') {
-            $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft()).css('color', 'black');
+            $('#Timeleft' + i).text('expires in ' + session.sessionTimer.timeLeft()).css('color', 'black');
             
             if (typeof $.fn.showLightBox === 'function') {
                 $.hideFormFiller();
@@ -71,14 +74,14 @@ var warningHelper = function (i, timer, timeoutlightbox, mode) {
                 $('#sessionSection').hide();
             }
         } else if (mode === 'afterwarningcallback') {
-            $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft() + ' WARNING!!!').css('color', 'red');
+            $('#Timeleft' + i).text('expires in ' + session.sessionTimer.timeLeft() + ' WARNING!!!').css('color', 'red');
 
             if (typeof $.fn.showLightBox === 'function') {
    
                 $.showFormFiller(false, true);
                 timeoutlightbox.show();
                 $('#sessionSection').show();
-                $('#sessionTimeLeft').text(timer.timer.timeLeft() + ' seconds');
+                $('#sessionTimeLeft').text(session.sessionTimer.timeLeft() + ' seconds');
                 $('#sessionSection').attr('tabindex', '0').focus();
             }
         } else if (mode === 'donecallback') {

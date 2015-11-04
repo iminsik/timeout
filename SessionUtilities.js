@@ -5,10 +5,10 @@
 
 (function (global, document, $) {
     'use strict';
-    var utilities = function () {
-        return new utilities.factory();
+    var sessionUtilities = function () {
+        return new sessionUtilities.factory();
     };
-    utilities.prototype = {
+    sessionUtilities.prototype = {
         IsUserSignIn: function () {
             $.ajax({
                 url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
@@ -79,12 +79,12 @@
         }
     };
 
-    utilities.factory = function () {
+    sessionUtilities.factory = function () {
         
     };
-    utilities.factory.prototype = utilities.prototype;
+    sessionUtilities.factory.prototype = sessionUtilities.prototype;
 
-    if (global && !global.utilities) {
-        global.utilities = utilities;
+    if (global && !global.sessionUtilities) {
+        global.sessionUtilities = sessionUtilities;
     }
 }(window, document, jQuery));
