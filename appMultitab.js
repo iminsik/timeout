@@ -3,10 +3,12 @@ var i,
     len,
     sessions = [],
     sessionSettings = [
-//        { name: 'Timer4', warningTime: 65, expiringTime: 70, mode: "debug" },
-//        { name: 'Timer1', warningTime: 25, expiringTime: 40, mode: "debug" },
-//        { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
-//        { name: 'Timer3', warningTime: 55, expiringTime: 60, mode: "debug" },
+// ***********************************************************************
+// { name: 'Timer4', warningTime: 65, expiringTime: 70, mode: "debug" },
+// { name: 'Timer1', warningTime: 25, expiringTime: 40, mode: "debug" },
+// { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
+// { name: 'Timer3', warningTime: 55, expiringTime: 60, mode: "debug" },
+// ***********************************************************************
         { name: 'Timer0', warningTime: 5, expiringTime: 30, mode: "debug" }
     ],
     timeoutlightbox = $('#sessionSection').filter(function () {
@@ -66,11 +68,15 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
     'use strict';
     return function () {
         if (mode === 'beforewarningcallback') {
+        // ***********************************************************************
         // CALLBACK BEFORE WARNING TIME
+        // ***********************************************************************
             $('#Timeleft' + i).text('expires in '
                                     + session.sessionTimer.timeLeft()).css('color', 'black');
         } else if (mode === 'afterwarningcallback') {
+        // ***********************************************************************
         // CALLBACK AFTER WARNING TIME
+        // ***********************************************************************
             $('#Timeleft' + i).text('expires in '
                                     + session.sessionTimer.timeLeft() + ' WARNING!!!').css('color', 'red');
 
@@ -83,7 +89,9 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
                 $('#sessionSection').attr('tabindex', '0').focus();
             }
         } else if (mode === 'expirecallback') {
+        // ***********************************************************************
         // CALLBACK WHEN EXPIRES
+        // ***********************************************************************
             $('#Timeleft' + i).text('Time has flied.').css('color', 'red');
             
             if (typeof $.fn.showLightBox === 'function') {
@@ -121,7 +129,9 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
                 }
             }
         } else if (mode === 'continuecallback') {
+        // ***********************************************************************
         // CALLBACK WHEN 'CONTINUE' button hits.
+        // ***********************************************************************
             if (typeof $.fn.showLightBox === 'function') {
                 $.hideFormFiller();
                 timeoutlightbox.hide();
