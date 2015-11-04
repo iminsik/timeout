@@ -34,7 +34,7 @@ var clickHelper = function (session) {
         if (session.sessionTimer.isExpired() === false) {
             session.clickContinue();
         }
-        if (typeof $.showLightBox === 'function') {
+        if (typeof $.fn.showLightBox === 'function') {
             $.hideFormFiller();
             timeoutlightbox.hide();
             $('#sessionSection').hide();
@@ -69,7 +69,6 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
         // CALLBACK BEFORE WARNING TIME
             $('#Timeleft' + i).text('expires in '
                                     + session.sessionTimer.timeLeft()).css('color', 'black');
-            
         } else if (mode === 'afterwarningcallback') {
         // CALLBACK AFTER WARNING TIME
             $('#Timeleft' + i).text('expires in '
@@ -123,8 +122,7 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
             }
         } else if (mode === 'continuecallback') {
         // CALLBACK WHEN 'CONTINUE' button hits.
-            // timer.clickContinue();
-            if (typeof $.showLightBox === 'function') {
+            if (typeof $.fn.showLightBox === 'function') {
                 $.hideFormFiller();
                 timeoutlightbox.hide();
                 $('#sessionSection').hide();
