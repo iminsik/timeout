@@ -1,8 +1,8 @@
 /*global $timer, console, $, utilities, s_gi*/
 var i,
     len,
-    timers = [],
-    timerSettings = [
+    sessions = [],
+    sessionSettings = [
 //        { name: 'Timer4', warningTime: 65, expiringTime: 70, mode: "debug" },
 //        { name: 'Timer1', warningTime: 25, expiringTime: 40, mode: "debug" },
 //        { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
@@ -21,7 +21,7 @@ var i,
             utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Close');
 
             // We need to call timer event ONLY HERE...
-            timers[0].clickContinue();
+            sessions[0].clickContinue();
             // as.stnw.extendSession(); // Extend Session
         }
     });
@@ -41,7 +41,7 @@ $('#sessionContinue').bind('click', function () {
     utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
 
     // We need to call timer event ONLY HERE...
-    timers[0].clickContinue();
+    sessions[0].clickContinue();
     // as.stnw.extendSession(); // Extend Session
 });
 
@@ -129,28 +129,28 @@ var warningHelper = function (i, timer, timeoutlightbox, mode) {
     };
 };
 
-for (i = 0, len = timerSettings.length; i < len; i = i + 1) {
-    timers.push(
-        window.timerMultitab(
-            timerSettings[i].name,
-            timerSettings[i].warningTime,
-            timerSettings[i].expiringTime,
-            timerSettings[i].mode
+for (i = 0, len = sessionSettings.length; i < len; i = i + 1) {
+    sessions.push(
+        window.sessionMultitab(
+            sessionSettings[i].name,
+            sessionSettings[i].warningTime,
+            sessionSettings[i].expiringTime,
+            sessionSettings[i].mode
         )
     );
-    timers[i]
-        .setBeforeWarningCallback(warningHelper(i, timers[i], timeoutlightbox, 'beforewarningcallback'))
-        .setAfterWarningCallback(warningHelper(i, timers[i], timeoutlightbox, 'afterwarningcallback'))
-        .setDoneCallback(warningHelper(i, timers[i], timeoutlightbox, 'donecallback'))
-        .setContinueCallback(warningHelper(i, timers[i], timeoutlightbox, 'continuecallback'));
+    sessions[i]
+        .setBeforeWarningCallback(warningHelper(i, sessions[i], timeoutlightbox, 'beforewarningcallback'))
+        .setAfterWarningCallback(warningHelper(i, sessions[i], timeoutlightbox, 'afterwarningcallback'))
+        .setDoneCallback(warningHelper(i, sessions[i], timeoutlightbox, 'donecallback'))
+        .setContinueCallback(warningHelper(i, sessions[i], timeoutlightbox, 'continuecallback'));
 
     $("#buttons").append("<input type='button' id='Timer"
                         + i + "Cont' value='Timer "
                         + i + "' /> <span id='Timeleft"
                         + i + "'></span><br />");
 
-    $('#Timer' + i + 'Cont').click(clickHelper(timers[i]));
-    timers[i].timerEventStart();
+    $('#Timer' + i + 'Cont').click(clickHelper(sessions[i]));
+    sessions[i].timerEventStart();
 }
 
 /*
