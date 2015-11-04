@@ -200,7 +200,7 @@
 
     timer.factory = function (warningSecs, expiringSecs) {
         this.count = 1;
-        this.pollTimeInMsec = 100;  // 1 sec
+        this.pollTimeInMsec = 100;  // 0.1 sec
         this.sessionTimeoutInMsec = expiringSecs * 1000;  // 20 mins - 3 secs
         this.sessionTimeoutWarningHappensInMsec = warningSecs * 1000;  // 20 mins - 23 secs
         this.countdownStarted = null;
