@@ -3,87 +3,127 @@ var i,
     len,
     timers = [],
     timerSettings = [
-        { name: 'Timer0', warningTime: 15, expiringTime: 30, mode: "debug" },
-        { name: 'Timer1', warningTime: 25, expiringTime: 40, mode: "debug" },
-        { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
-        { name: 'Timer3', warningTime: 55, expiringTime: 60, mode: "debug" },
-        { name: 'Timer4', warningTime: 65, expiringTime: 70, mode: "debug" }
-    ];
+//        { name: 'Timer4', warningTime: 65, expiringTime: 70, mode: "debug" },
+//        { name: 'Timer1', warningTime: 25, expiringTime: 40, mode: "debug" },
+//        { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
+//        { name: 'Timer3', warningTime: 55, expiringTime: 60, mode: "debug" },
+        { name: 'Timer0', warningTime: 5, expiringTime: 30, mode: "debug" }
+    ],
+    timeoutlightbox = $('#sessionSection').filter(function () {
+        'use strict';
+        return ($(this).css('display') === 'none');
+    }).showLightBox({
+        width: 460,
+        height: 215,
+        onClose: function () {
+            'use strict';
+            // Setting omniture tags
+            utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Close');
+
+            // We need to call timer event ONLY HERE...
+            timers[0].clickContinue();
+            // as.stnw.extendSession(); // Extend Session
+        }
+    });
+
+$.hideFormFiller();
+timeoutlightbox.hide();
+$('#sessionSection').hide();
+
+// Bind Continue events 
+$('#sessionContinue').bind('click', function () {
+    'use strict';
+    $.hideFormFiller();
+    timeoutlightbox.hide();
+    $('#sessionSection').hide();
+
+    // Setting omniture tags
+    utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
+
+    // We need to call timer event ONLY HERE...
+    timers[0].clickContinue();
+    // as.stnw.extendSession(); // Extend Session
+});
+
 
 var clickHelper = function (timer) {
     'use strict';
     return function () {
         timer.clickContinue();
+        if (typeof $.showLightBox === 'function') {
+            $.hideFormFiller();
+            timeoutlightbox.hide();
+            $('#sessionSection').hide();
+        }
     };
 };
 
 /*global RedirectURL, hasRefreshElement */
-var warningHelper = function (i, timer, mode) {
+var warningHelper = function (i, timer, timeoutlightbox, mode) {
     'use strict';
     return function () {
         if (mode === 'beforewarningcallback') {
             $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft()).css('color', 'black');
             
-            if (typeof $.showLightBox === 'function') {
+            if (typeof $.fn.showLightBox === 'function') {
+                $.hideFormFiller();
+                timeoutlightbox.hide();
                 $('#sessionSection').hide();
             }
         } else if (mode === 'afterwarningcallback') {
             $('#Timeleft' + i).text('expires in ' + timer.timer.timeLeft() + ' WARNING!!!').css('color', 'red');
 
-            if (typeof $.showLightBox === 'function') {
-                $('#sessionSection').filter(function () {
-                    return ($(this).css('display') === 'none');
-                }).showLightBox({
-                    width: 460,
-                    height: 215,
-                    onClose: function () {
-                        // Setting omniture tags
-                        utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Close');
-
-                        // as.stnw.extendSession(); // Extend Session
-                    }
-                }).show();
-                $('#sessionTimeLeft').text(timer.timer.timeleft() + ' seconds');
+            if (typeof $.fn.showLightBox === 'function') {
+   
+                $.showFormFiller(false, true);
+                timeoutlightbox.show();
+                $('#sessionSection').show();
+                $('#sessionTimeLeft').text(timer.timer.timeLeft() + ' seconds');
                 $('#sessionSection').attr('tabindex', '0').focus();
             }
         } else if (mode === 'donecallback') {
             $('#Timeleft' + i).text('Time has flied.').css('color', 'red');
             
-            if (typeof $.showLightBox === 'function') {
+            if (typeof $.fn.showLightBox === 'function') {
                 $('#sessionExpiring').text('Session Expired').css({ color: 'red' });
                 $('#sessionKeepActive').css({ visibility: 'hidden' });
                 $('#sessionContinue').css({ visibility: 'hidden' });
 
-                $.ajax({
-                    // This url will force the user to sign out.
-                    url: '//www.alaskaair.com/services/v1/loginvalidator/Logout',
-                    type: 'POST',
-                    data: { t: (new Date()).getDate() },
-                    success: function (data) {
-                        $('#sessionWillExpire')
-                            .html('Your session expired at <b>'
-                                  + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
-                                  + '</b>');
-                        // Move to SignIn Page.
-                        if (RedirectURL !== '') {
-                            window.location.href = RedirectURL;
-                        } else if (hasRefreshElement) {
-                            $('#CheckOutExpirationTimestamp').val($('#CheckOutExpiredTimestamp').val());
-                            document.getElementById('Refresh').click();
-                        } else { // We may refresh the page not to show outdated login status
-                            window.location.reload();
+                if (window.location.hostname === 'www.alaskaair.com') {
+                    $.ajax({
+                        // This url will force the user to sign out.
+                        url: '//www.alaskaair.com/services/v1/loginvalidator/Logout',
+                        type: 'POST',
+                        data: { t: (new Date()).getDate() },
+                        success: function (data) {
+                            $('#sessionWillExpire')
+                                .html('Your session expired at <b>'
+                                      + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
+                                      + '</b>');
+                            // Move to SignIn Page.
+                            if (RedirectURL !== '') {
+                                window.location.href = RedirectURL;
+                            } else if (hasRefreshElement) {
+                                $('#CheckOutExpirationTimestamp').val($('#CheckOutExpiredTimestamp').val());
+                                document.getElementById('Refresh').click();
+                            } else { // We may refresh the page not to show outdated login status
+                                window.location.reload();
+                            }
                         }
-                    }
-                });
+                    });
+                } else {
+                    $('#sessionWillExpire')
+                        .html('Your session expired at <b>'
+                              + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
+                              + '</b>');
+                }
             }
         } else if (mode === 'continuecallback') {
+            // timer.clickContinue();
             if (typeof $.showLightBox === 'function') {
-                if ($.hideLightBoxes) {
-                    $.hideLightBoxes();
-                }
-                if ($.hideFormFiller) {
-                    $.hideFormFiller();
-                }
+                $.hideFormFiller();
+                timeoutlightbox.hide();
+                $('#sessionSection').hide();
             }
         }
     };
@@ -99,15 +139,21 @@ for (i = 0, len = timerSettings.length; i < len; i = i + 1) {
         )
     );
     timers[i]
-        .setBeforeWarningCallback(warningHelper(i, timers[i], 'beforewarningcallback'))
-        .setAfterWarningCallback(warningHelper(i, timers[i], 'afterwarningcallback'))
-        .setDoneCallback(warningHelper(i, timers[i], 'donecallback'))
-        .setContinueCallback(warningHelper(i, timers[i], 'continuecallback'));
+        .setBeforeWarningCallback(warningHelper(i, timers[i], timeoutlightbox, 'beforewarningcallback'))
+        .setAfterWarningCallback(warningHelper(i, timers[i], timeoutlightbox, 'afterwarningcallback'))
+        .setDoneCallback(warningHelper(i, timers[i], timeoutlightbox, 'donecallback'))
+        .setContinueCallback(warningHelper(i, timers[i], timeoutlightbox, 'continuecallback'));
+
+    $("#buttons").append("<input type='button' id='Timer"
+                        + i + "Cont' value='Timer "
+                        + i + "' /> <span id='Timeleft"
+                        + i + "'></span><br />");
 
     $('#Timer' + i + 'Cont').click(clickHelper(timers[i]));
     timers[i].timerEventStart();
 }
 
+/*
 // Inject partial view from Sitecore
 $.ajax({
     url: '//' + 'www.alaskaair.com' + '/content/partial/session-timeout',
@@ -132,6 +178,7 @@ $.ajax({
         }
     }
 });
+*/
 /**********************************************
 // Inject partial view from Sitecore
 $.ajax({

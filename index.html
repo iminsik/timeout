@@ -8,15 +8,22 @@
         </style>
     </head>
     <body>
-        Continue <br />
-        <input type='button' id='Timer0Cont' value='Timer 0' /> <span id="Timeleft0"></span><br />
-        <input type='button' id='Timer1Cont' value='Timer 1' /> <span id="Timeleft1"></span><br />
-        <input type='button' id='Timer2Cont' value='Timer 2' /> <span id="Timeleft2"></span><br />
-        <input type='button' id='Timer3Cont' value='Timer 3' /> <span id="Timeleft3"></span><br />
-        <input type='button' id='Timer4Cont' value='Timer 4' /> <span id="Timeleft4"></span>
+        <div id="buttons">
+        </div>
+
+        <div id="sessionSection" style="display:none;" tabindex="-1">
+            <h1 id="sessionExpiring">Session Expiring</h1>
+            <p id="sessionWillExpire" style="visibility:visible">
+                 Your session will expire in <span id="sessionTimeLeft"></span>
+            </p>
+            <p id="sessionKeepActive">To keep your session active, select Continue.</p>
+            <button id="sessionContinue" class="btn btn-green pull-right">CONTINUE</button>
+        </div>
 
         <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>
         <script type="text/javascript" src="./timeoutMultitabWidget.js"></script>
+        <script type="text/javascript" src="./Lightbox.js"></script>
         <script type="text/javascript" src="./appMultitab.js"></script>
     </body>
 </html>

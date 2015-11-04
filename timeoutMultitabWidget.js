@@ -31,7 +31,7 @@
             });
         },
         setOmniture: function (domain, linkTrackVar, linkTrackEvent, category, event) {
-            if (s_gi) {
+            if (global.s_gi) {
                 var s = s_gi(domain);
                 s.linkTrackVars = linkTrackVar;
                 s.linkTrackEvents = linkTrackEvent;
@@ -200,7 +200,7 @@
 
     timer.factory = function (warningSecs, expiringSecs) {
         this.count = 1;
-        this.pollTimeInMsec = 1000;  // 1 sec
+        this.pollTimeInMsec = 100;  // 1 sec
         this.sessionTimeoutInMsec = expiringSecs * 1000;  // 20 mins - 3 secs
         this.sessionTimeoutWarningHappensInMsec = warningSecs * 1000;  // 20 mins - 23 secs
         this.countdownStarted = null;
