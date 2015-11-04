@@ -66,15 +66,14 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
     'use strict';
     return function () {
         if (mode === 'beforewarningcallback') {
-            $('#Timeleft' + i).text('expires in ' + session.sessionTimer.timeLeft()).css('color', 'black');
+        // CALLBACK BEFORE WARNING TIME
+            $('#Timeleft' + i).text('expires in '
+                                    + session.sessionTimer.timeLeft()).css('color', 'black');
             
-            if (typeof $.fn.showLightBox === 'function') {
-                $.hideFormFiller();
-                timeoutlightbox.hide();
-                $('#sessionSection').hide();
-            }
         } else if (mode === 'afterwarningcallback') {
-            $('#Timeleft' + i).text('expires in ' + session.sessionTimer.timeLeft() + ' WARNING!!!').css('color', 'red');
+        // CALLBACK AFTER WARNING TIME
+            $('#Timeleft' + i).text('expires in '
+                                    + session.sessionTimer.timeLeft() + ' WARNING!!!').css('color', 'red');
 
             if (typeof $.fn.showLightBox === 'function') {
    
@@ -84,7 +83,8 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
                 $('#sessionTimeLeft').text(session.sessionTimer.timeLeft() + ' seconds');
                 $('#sessionSection').attr('tabindex', '0').focus();
             }
-        } else if (mode === 'donecallback') {
+        } else if (mode === 'expirecallback') {
+        // CALLBACK WHEN EXPIRES
             $('#Timeleft' + i).text('Time has flied.').css('color', 'red');
             
             if (typeof $.fn.showLightBox === 'function') {
@@ -122,6 +122,7 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
                 }
             }
         } else if (mode === 'continuecallback') {
+        // CALLBACK WHEN 'CONTINUE' button hits.
             // timer.clickContinue();
             if (typeof $.showLightBox === 'function') {
                 $.hideFormFiller();
@@ -144,7 +145,7 @@ for (i = 0, len = sessionSettings.length; i < len; i = i + 1) {
     sessions[i]
         .setBeforeWarningCallback(warningHelper(i, sessions[i], timeoutlightbox, 'beforewarningcallback'))
         .setAfterWarningCallback(warningHelper(i, sessions[i], timeoutlightbox, 'afterwarningcallback'))
-        .setDoneCallback(warningHelper(i, sessions[i], timeoutlightbox, 'donecallback'))
+        .setDoneCallback(warningHelper(i, sessions[i], timeoutlightbox, 'expirecallback'))
         .setContinueCallback(warningHelper(i, sessions[i], timeoutlightbox, 'continuecallback'));
 
     $("#buttons").append("<input type='button' id='Timer"
