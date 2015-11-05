@@ -12,7 +12,7 @@
 		// ****************************************
 		// check if user is logged in or not.
 		// ****************************************
-        IsUserSignIn: function (signInAction, singOutAction) {
+        IsUserSignIn: function (signInAction, signOutAction) {
             $.ajax({
                 url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
                 success: function (data) {
