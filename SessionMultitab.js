@@ -1,20 +1,30 @@
+// --------------------
+// Session Multitab with Cookie
+// beforewarningcallback, 
+// afterwarningcallback,
+// continuecallback,
+// donecallback
+// --------------------
+
 /*global jQuery */
-// Multitab timer with callbacks, i.e.:
-//  beforewarning callback
-//  afterwarning callback
-//  continue callback
-//  done callback
 (function (global, $, sessionTimer, sessionUtilities) {
     'use strict';
     var sessionMultitab = function (name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb) {
         return new sessionMultitab.factory(name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb);
     };
     sessionMultitab.prototype = {
+		// ********************************************
+		// start sessionTimer
+		// by 'sessionTimer.countdownStarted = new Date();'
+		// call setTimeout again and again
+		// to check if sessionTimer is expired or not
+		// ********************************************
         timerEventStart: function () {
             var self = this,
                 startDeferred;
 
-            // create timercheck callback with event callbacks
+            // generate timercheck callback function object 
+			// with event callbacks
             self.timercheckcallback
                 = self.timerEventCheckGenerator(self.beforeWarningCallback,
                                                  self.afterWarningCallback,
@@ -40,7 +50,9 @@
 
             startDeferred();
         },
-        // restart timer.
+		// ********************************************
+        // reset/restart sessionTimer
+		// ********************************************
         timerEventRestart: function () {
             this.sessionTimer.reset();
             // 3. USER DEFINABLE CONTINUE CALLBACK
@@ -48,13 +60,18 @@
                 this.continueCallback();
             }
         },
-        // reset Multitab local variable and cookies.
+		// ********************************************
+        // expire Multitab local variable and cookies.
+		// ********************************************
         expireMultitabConfig: function () {
             this.multitab.nClickCont = 0;
             sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'bSessionExpired', true, '127.0.0.1');
             sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'nClickCont', 0, '127.0.0.1');
         },
-        // behave like it, when user clicks 'Continue' button.
+		// ********************************************
+        // increase nClickCont in cookie collection, 
+		// when user clicks 'Continue' button.
+		// ********************************************
         clickContinue: function () {
             var strClickCont = sessionUtilities.prototype.getCookieByKey('sessionMultitab', 'nClickCont');
             if (strClickCont === null) {
@@ -63,7 +80,10 @@
 
             sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'nClickCont', strClickCont + 1, '127.0.0.1');
         },
-        // generate timer check callback will be called by 'settimeout'.
+		// ********************************************
+        // generate timer check callback will be called 
+		// by 'settimeout'
+		// ********************************************
         timerEventCheckGenerator: function (beforewarningcb, afterwarningcb, donecb) {
             var self = this;
             return function () {
@@ -117,21 +137,34 @@
                 }
             };
         },
+		// ********************************************
+		// set callback function run before warning time
+		// ********************************************
         setBeforeWarningCallback: function (cb) {
             var self = this;
             self.beforeWarningCallback = cb;
             return self;
         },
+		// ********************************************
+		// set callback function run after warning time
+		// ********************************************
         setAfterWarningCallback: function (cb) {
             var self = this;
             self.afterWarningCallback = cb;
             return self;
         },
+		// ********************************************
+		// set callback function run,
+		// when user selects 'session continue'
+		// ********************************************
         setContinueCallback: function (cb) {
             var self = this;
             self.continueCallback = cb;
             return self;
         },
+		// ********************************************
+		// set callback function run when time expires
+		// ********************************************
         setDoneCallback: function (cb) {
             var self = this;
             self.doneCallback = cb;
@@ -171,8 +204,11 @@
     };
     sessionMultitab.factory.prototype = sessionMultitab.prototype;
     
+	// ********************************************
+	// expose sessionMultitab to global scope
+	// ********************************************
     if (global && !global.sessionMultitab) {
         global.sessionMultitab = sessionMultitab;
     }
-    
+
 }(window, jQuery, window.sessionTimer, window.sessionUtilities));

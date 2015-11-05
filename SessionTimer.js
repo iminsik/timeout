@@ -1,11 +1,16 @@
-// Basic Timer & Events
+// ****************************************
+// Session Timer
+// ****************************************
+
 (function (global) {
     'use strict';
     var sessionTimer = function (warningSecs, expiringSecs) {
         return new sessionTimer.factory(warningSecs, expiringSecs);
     };
     sessionTimer.prototype = {
+		// ********************************************
         // determine how much time elapsed in msec.
+		// ********************************************
         elapsedInMsec: function () {
             // convert both dates to milliseconds
             try {
@@ -20,24 +25,32 @@
                 return 0;
             }
         },
-        // determine if time has passed.
+		// ********************************************
+        // check if time has passed.
+		// ********************************************
         isExpired: function () {
             return this.elapsedInMsec()
 				> this.sessionTimeoutInMsec;
         },
-        // determine if warning time has come.
+		// ********************************************
+        // check if warning time has come.
+		// ********************************************
         isWarningThresholdReached: function () {
             return this.elapsedInMsec()
 				>= this.sessionTimeoutWarningHappensInMsec;
         },
-        // determine how much time is left until expiring.
+		// ********************************************
+        // return time left until expiring.
+		// ********************************************
         timeLeft: function () {
             return Math.floor(Math.max(0,
 									   (this.sessionTimeoutInMsec
 										- this.elapsedInMsec()))
 							  / 1000);
         },
-        // determine time settings are all valid.
+		// ********************************************
+        // check if time settings are all valid.
+		// ********************************************
         isSettingsValid: function () {
             var i = 0, len = 0;
             for (i = 0, len = this.validSettingFunctions.length; i < len; i = i + 1) {
@@ -47,7 +60,9 @@
             }
             return true;
         },
-        // reset Timer configuration
+		// ********************************************
+        // reset/restart Timer configuration
+		// ********************************************
         reset: function () {
             if (this.isResettingSession) { return; }
 
@@ -57,16 +72,21 @@
             this.sessionHasTimedout = false;
             this.isResettingSession = false;
         },
-        // determine total percent complete, ie., ratio of 'elapsed time' to 'time session is active'
+		// ********************************************
+        // return total percent complete,
+		// ie., ratio of 'elapsed time' to 'time session is active'
         // UI will want to respond to this countdown
+		// ********************************************
         totalCountdownPercentComplete: function () {
             return Math.floor(100 *
                              (this.elapsedInMsec()
                               / this.sessionTimeoutInMsec));
         },
-        // determine warning percent complete,
+		// ********************************************
+        // return warning percent complete,
         // ie., ratio of 'elapsed time' to 'time to wait before warning'
         // UI may want to respond to this countdown
+		// ********************************************
         warningCountdownPercentComplete: function () {
             return Math.floor(100 * ((this.elapsedInMsec()
                                  - this.sessionTimeoutWarningHappensInMsec)
@@ -74,8 +94,10 @@
                    - this.sessionTimeoutWarningHappensInMsec)));
         }
     };
-    
-    // Error constants.
+
+	// ********************************************
+    // define error constants
+	// ********************************************
     sessionTimer.prototype.ERRORS = {
         POSITIVESESSIONTIMEOUT: 'Session timeout must be a positive number.',
         NONZEROTIMEOUT: 'Session timeout can\'t be zero or negative.',
@@ -83,6 +105,9 @@
         NONWARNINGTIME: 'Session timeout warning can\'t be zero or negative.',
         WARNINGSMALLERTHANTIMEOUT: 'Session timeout warning must be smaller than Session timeout.'
     };
+	// ********************************************
+	// define error validation functions and msgs
+	// ********************************************
     sessionTimer.prototype.validSettingFunctions = [
         {
             isValid: function () { return typeof this.sessionTimeoutInMsec !== 'number'; },

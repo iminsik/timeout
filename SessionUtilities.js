@@ -1,14 +1,17 @@
-/*global jQuery, s_gi, stnw_init_page, console*/
 // --------------------
 // Session Utilities
 // --------------------
 
+/*global jQuery, s_gi, stnw_init_page, console*/
 (function (global, document, $) {
     'use strict';
     var sessionUtilities = function () {
         return new sessionUtilities.factory();
     };
     sessionUtilities.prototype = {
+		// ****************************************
+		// check if user is logged in or not.
+		// ****************************************
         IsUserSignIn: function () {
             $.ajax({
                 url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
@@ -29,6 +32,25 @@
                 }
             });
         },
+		// ****************************************
+		// extend session by calling GetUserStatus
+		// ****************************************
+		extendSession: function (session, bForceStartTimer) {
+			$.ajax({
+				url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
+				success: function (data) {
+					if (data.bLogin === false && bForceStartTimer === false) {
+						session.doneCallback();
+					}
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					session.doneCallback();
+				}
+			});
+		},
+		// ****************************************
+		// set Omniture tag
+		// ****************************************
         setOmniture: function (domain, linkTrackVar, linkTrackEvent, category, event) {
             if (global.s_gi) {
                 var s = s_gi(domain);
@@ -39,9 +61,12 @@
                 s.prop16 = '';
             }
         },
-        getCookie: function (name) {
+		// ****************************************
+		// get Cookie Collection
+		// ****************************************
+        getCookieCollection: function (collectionName) {
             var i, len, c,
-                nameEQ = name + "=",
+                nameEQ = collectionName + "=",
                 cookies = window.document.cookie.split(';');
             for (i = 0, len = cookies.length; i < len; i = i + 1) {
                 c = cookies[i];
@@ -54,19 +79,25 @@
             }
             return {};
         },
-        getCookieByKey: function (store, key) {
-            var cookieCollection = this.getCookie(store);
+		// ****************************************
+		// get key/value in cookie collection
+		// ****************************************
+        getCookieByKey: function (collectionKey, key) {
+            var cookieCollection = this.getCookieCollection(collectionKey);
             if (cookieCollection.hasOwnProperty(key)) {
                 return cookieCollection[key];
             }
             return null;
         },
-        setCookieByKey: function (store, key, value, domain) {
-            var cookieCollection = this.getCookie(store),
+		// ****************************************
+		// set key/value in cookie collection
+		// ****************************************
+        setCookieByKey: function (collectionKey, key, value, domain) {
+            var cookieCollection = this.getCookieCollection(collectionKey),
                 t = new Date();
 
             cookieCollection[key] = value;
-            document.cookie = store + "=" + JSON.stringify(cookieCollection)
+            document.cookie = collectionKey + "=" + JSON.stringify(cookieCollection)
                 + "; expires="
                 + (new Date(t.getFullYear(),
                             t.getMonth(),
@@ -84,6 +115,9 @@
     };
     sessionUtilities.factory.prototype = sessionUtilities.prototype;
 
+	// ********************************************
+	// expose sessionUtilities to global scope
+	// ********************************************
     if (global && !global.sessionUtilities) {
         global.sessionUtilities = sessionUtilities;
     }
