@@ -68,17 +68,13 @@ $('#sessionContinue').bind('click', function () {
 /*global RedirectURL, hasRefreshElement */
 var warningHelper = function (i, session, timeoutlightbox, mode) {
     'use strict';
-    return function () {
-        if (mode === 'beforewarningcallback') {
-        // ***********************************************************************
-        // CALLBACK BEFORE WARNING TIME
-        // ***********************************************************************
+	if (mode === 'beforewarningcallback') {
+		return function () {
             $('#Timeleft' + i).text('expires in '
                                     + session.sessionTimer.timeLeft()).css('color', 'black');
-        } else if (mode === 'afterwarningcallback') {
-        // ***********************************************************************
-        // CALLBACK AFTER WARNING TIME
-        // ***********************************************************************
+		};
+	} else if (mode === 'afterwarningcallback') {
+		return function () {
             $('#Timeleft' + i).text('expires in '
                                     + session.sessionTimer.timeLeft() + ' WARNING!!!').css('color', 'red');
 
@@ -90,10 +86,9 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
                 $('#sessionTimeLeft').text(session.sessionTimer.timeLeft() + ' seconds');
                 $('#sessionSection').attr('tabindex', '0').focus();
             }
-        } else if (mode === 'expirecallback') {
-        // ***********************************************************************
-        // CALLBACK WHEN EXPIRES
-        // ***********************************************************************
+		};
+	} else if (mode === 'expirecallback') {
+		return function () {
             $('#Timeleft' + i).text('Time has flied.').css('color', 'red');
             
             if (typeof $.fn.showLightBox === 'function') {
@@ -129,18 +124,17 @@ var warningHelper = function (i, session, timeoutlightbox, mode) {
                               + (new Date().toTimeString().replace(/[\w\W]*(\d{2}:\d{2}:\d{2})[\w\W]*/, "$1"))
                               + '</b>');
                 }
-            }
-        } else if (mode === 'continuecallback') {
-        // ***********************************************************************
-        // CALLBACK WHEN 'CONTINUE' button hits.
-        // ***********************************************************************
+			}
+		};
+	} else if (mode === 'continuecallback') {
+		return function () {
             if (typeof $.fn.showLightBox === 'function') {
                 $.hideFormFiller();
                 timeoutlightbox.hide();
                 $('#sessionSection').hide();
             }
-        }
-    };
+		};
+	}
 };
 
 for (i = 0, len = sessionSettings.length; i < len; i = i + 1) {
@@ -166,128 +160,3 @@ for (i = 0, len = sessionSettings.length; i < len; i = i + 1) {
     $('#Timer' + i + 'Cont').click(clickHelper(sessions[i]));
     sessions[i].timerEventStart();
 }
-
-/*
-// Inject partial view from Sitecore
-$.ajax({
-    url: '//' + 'www.alaskaair.com' + '/content/partial/session-timeout',
-    cache: false,
-    success: function (data) {
-        'use strict';
-        if (data.toLowerCase().indexOf("this page has taken off") === -1) {
-            $('body').append(data);
-
-            // Bind Continue events 
-            $('#sessionContinue').bind('click', function () {
-                var nClickCont = utilities.prototype.getCookieByKey('timerMultiTab', 'nClickCont');
-                // Setting omniture tags
-                utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
-
-                $.hideLightBoxes();
-                $.hideFormFiller();
-
-                utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', nClickCont + 1, '127.0.0.1');
-                // as.stnw.extendSession(); // Extend Session
-            });
-        }
-    }
-});
-*/
-/**********************************************
-// Inject partial view from Sitecore
-$.ajax({
-    url: '//' + 'www.alaskaair.com' + '/content/partial/session-timeout',
-    cache: false,
-    success: function (data) {
-        'use strict';
-        if (data.toLowerCase().indexOf("this page has taken off") === -1) {
-            $('body').append(data);
-
-            // Bind Continue events 
-            $('#sessionContinue').bind('click', function () {
-                // Setting omniture tags
-                utilities.prototype.setOmniture('alaskacom', 'prop16', 'None', 'sessionExpiring', 'Continue');
-
-                $.hideLightBoxes();
-                $.hideFormFiller();
-
-                utilities.prototype.setCookieByKey('timerMultiTab', 'nClickCont', (parseInt(strClickCont, 10) + 1).toString(), '127.0.0.1' );
-
-                as.stnw.extendSession(); // Extend Session
-            });
-
-            stnw.isUserLoggedIn = function (successCallback, failureCallback) {
-                $.ajax({
-                    url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
-                    success: function (data) {
-                        // Start timer callback, depending on user type
-                        if (data.bLogin === true) {
-                            stnw.setCookieByKey('bSessionExpired', false);
-                            // Set User Type
-                            if (data.bEasyBiz === true) {
-                                stnw.UserType = stnw.UserTypeAndRedirectUrlEnum.EZBUser.UserType;
-                            }
-                            else {
-                                stnw.UserType = stnw.UserTypeAndRedirectUrlEnum.MAAUser.UserType;
-                            }
-
-                            // Set Default Redirect URL for EasyBiz
-                            if (stnw.UserType === stnw.UserTypeAndRedirectUrlEnum.EZBUser.UserType) {
-                                stnw.RedirectURL = stnw.UserTypeAndRedirectUrlEnum.EZBUser.RedirectURL;
-                            }
-                            // Overwrite RedirectURL in AS.COM, if each page doesn't specifiy Redirect URL
-                            else {
-                                if(stnw.RedirectURL === '') {
-                                    // if not SiteCore page
-                                    if (window.location &&
-                                        (window.location.pathname.toLowerCase().indexOf('/content/') === -1
-                                         && window.location.pathname.toLowerCase() !== '/')) {
-                                        stnw.RedirectURL = stnw.UserTypeAndRedirectUrlEnum.MAAUser.RedirectURL;
-                                    }
-                                }
-                            }
-
-                            // Temporary Control flow for Release Oct 28th 2015
-                            // to enable timeout lightbox only in EasyBiz, MyAccount, SiteCore and etc.
-                            //if (stnw.UserType === stnw.UserTypeAndRedirectUrlEnum.EZBUser.UserType // EasyBiz User
-                            //    || (window.location.pathname.toLowerCase().indexOf('/content/') !== -1) // SiteCore
-                            //    || (window.location.pathname.toLowerCase().indexOf('/shopping/cart/') !== -1) // Cart
-                            //    || (window.location.pathname.toLowerCase().indexOf('myalaskaair.aspx') !== -1
-                            //        || window.location.pathname.toLowerCase().indexOf('/mileageplan') !== -1
-                            //        || window.location.pathname.toLowerCase().indexOf('/myaccount/preferences') !== -1) // MyAccount
-                            //    || (window.location.pathname.toLowerCase().indexOf('cancelreservation.aspx') !== -1
-                            //        && $('#FormUserControl__heading').text() === 'Cancel This Flight Reservation') // CancelReservation
-                            //    || (window.location.pathname.toLowerCase().indexOf('giftcertificatestart.aspx') !== -1) // Giftcertificate
-                            //    || (window.location.pathname.toLowerCase().indexOf('club49registration') !== -1) // club49
-                            //    || as.stnw.bForceStartTimer === true) { // When sign-off in some specific pages
-                                (successCallback || Function)();
-                            //}
-                        }
-                        else {
-                            if (as.stnw.bForceStartTimer === true) {
-                                stnw.setCookieByKey('bSessionExpired', false);
-                                (successCallback || Function)();
-                            } else {
-                                (failureCallback || Function)();
-                            }
-                        }
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        stnw.setCookieByKey('bSessionExpired', true);
-                    }
-                });
-            };
-
-            stnw.timeoutStart = function () {
-                this.isUserLoggedIn(this.startTimer, this.resetCookie);
-            }
-
-            if (typeof (stnw_init_page) == "function") {
-                stnw_init_page();
-            }
-
-            as.stnw.timeoutStart();
-        }
-    }
-});
-******************************************************/
