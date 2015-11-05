@@ -26,7 +26,8 @@ var i,
             if (sessions[0].sessionTimer.isExpired() === false) {
                 sessions[0].clickContinue();
             }
-            // as.stnw.extendSession(); // Extend Session
+			// TODO: extend session
+            // as.stnw.extendSession();
         }
     });
 
@@ -60,7 +61,8 @@ $('#sessionContinue').bind('click', function () {
 
     // We need to call timer event ONLY HERE...
     sessions[0].clickContinue();
-    // as.stnw.extendSession(); // Extend Session
+	// TODO: extend session
+	// as.stnw.extendSession();
 });
 
 /*global RedirectURL, hasRefreshElement */
