@@ -12,23 +12,14 @@
 		// ****************************************
 		// check if user is logged in or not.
 		// ****************************************
-        IsUserSignIn: function () {
+        IsUserSignIn: function (signInAction, singOutAction) {
             $.ajax({
                 url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
                 success: function (data) {
-                    if (data.bLogin === true) {
-                        // Set User Type
-                        if (data.bEasyBiz === true) {
-                            global.console.log('EasyBiz Sign In');
-                        } else {
-                            global.console.log('Normal Sign In');
-                        }
-                    } else {
-                        global.console.log('Not Sign In');
-                    }
+					signInAction();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    global.console.log('Endpoint got error!!!');
+                    signOutAction();
                 }
             });
         },
