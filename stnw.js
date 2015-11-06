@@ -1,7 +1,7 @@
 // --------------------
 // stnw library / start
 // --------------------
-// bbbbbb 
+// cccccc 
 // (s)ession (t)imeout (n)otification (w)idget object
 // this block of code is responsible for initilizing the object
 // implementing the countdown and setting the internal status.
