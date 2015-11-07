@@ -13,6 +13,12 @@
         return new sessionMultitab.factory(name, warningSecs, expiringSecs, mode, beforecb, aftercb, contcb, donecb);
     };
     sessionMultitab.prototype = {
+		CONSTANTS: {
+			MULTITABCOOKIE: 'sessionMultitab',
+			SESSIONEXPIRED: 'bSessionExpired',
+			NCLICKCONT: 'nClickCont',
+			DOMAIN: '127.0.0.1'
+		},
 		// ********************************************
 		// start sessionTimer
 		// by 'sessionTimer.countdownStarted = new Date();'
@@ -65,20 +71,31 @@
 		// ********************************************
         expireMultitabConfig: function () {
             this.multitab.nClickCont = 0;
-            sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'bSessionExpired', true, '127.0.0.1');
-            sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'nClickCont', 0, '127.0.0.1');
+            sessionUtilities.prototype.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.SESSIONEXPIRED,
+													  true,
+													  this.CONSTANTS.DOMAIN);
+            sessionUtilities.prototype.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.NCLICKCONT,
+													  0,
+													  this.CONSTANTS.DOMAIN);
         },
 		// ********************************************
         // increase nClickCont in cookie collection, 
 		// when user clicks 'Continue' button.
 		// ********************************************
         clickContinue: function () {
-            var strClickCont = sessionUtilities.prototype.getCookieByKey('sessionMultitab', 'nClickCont');
+            var strClickCont
+				= sessionUtilities.prototype.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+															this.CONSTANTS.NCLICKCONT);
             if (strClickCont === null) {
                 strClickCont = 0;
             }
 
-            sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'nClickCont', strClickCont + 1, '127.0.0.1');
+            sessionUtilities.prototype.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.NCLICKCONT,
+													  strClickCont + 1,
+													  this.CONSTANTS.DOMAIN);
         },
 		// ********************************************
         // generate timer check callback will be called 
@@ -92,7 +109,9 @@
                 self.sessionTimer.count = self.sessionTimer.count + 1;
 
                 if (self.sessionTimer.isExpired()
-                        || sessionUtilities.prototype.getCookieByKey('sessionMultitab', 'bSessionExpired') === true) {
+                        || sessionUtilities
+							.prototype.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.SESSIONEXPIRED) === true) {
                     // if time has passed, finish and cleanup
                     self.sessionTimer.sessionHasTimedout = true;
                     self.expireMultitabConfig();
@@ -104,8 +123,14 @@
                     }
                 } else {
                     // otherwise, keep checking
-                    nCurrentClickCont = sessionUtilities.prototype.getCookieByKey('sessionMultitab', 'nClickCont');
-                    bSessionExpiredCookie = sessionUtilities.prototype.getCookieByKey('sessionMultitab', 'bSessionExpired');
+                    nCurrentClickCont
+						= sessionUtilities
+							.prototype.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.NCLICKCONT);
+                    bSessionExpiredCookie
+						= sessionUtilities
+							.prototype.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.SESSIONEXPIRED);
 
                     // raise callback so client can update its UI
                     if (self.mode.toLowerCase() !== 'release') {
@@ -177,9 +202,16 @@
         self.name = name;
         self.mode = mode || "release";
         self.sessionTimer = sessionTimer(warningSecs, expiringSecs);
-        sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'bSessionExpired', false, '127.0.0.1');
-        if (sessionUtilities.prototype.getCookieByKey('sessionMultitab', 'nClickCont') === null) {
-            sessionUtilities.prototype.setCookieByKey('sessionMultitab', 'nClickCont', 0, '127.0.0.1');
+        sessionUtilities.prototype.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+												  this.CONSTANTS.SESSIONEXPIRED,
+												  false,
+												  this.CONSTANTS.DOMAIN);
+        if (sessionUtilities.prototype.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.NCLICKCONT) === null) {
+            sessionUtilities.prototype.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+													  this.CONSTANTS.NCLICKCONT,
+													  0,
+													  this.CONSTANTS.DOMAIN);
         }
 
         self.multitab = {

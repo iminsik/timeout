@@ -9,12 +9,13 @@
         return new sessionUtilities.factory();
     };
     sessionUtilities.prototype = {
+		URLGetUserStatus: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus',
 		// ****************************************
 		// check if user is logged in or not.
 		// ****************************************
         IsUserSignIn: function (signInAction, signOutAction) {
             $.ajax({
-                url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
+                url: this.URLGetUserStatus + '?t=' + (new Date()).getTime(),
                 success: function (data) {
 					signInAction();
                 },
@@ -28,7 +29,7 @@
 		// ****************************************
 		extendSession: function (session, bForceStartTimer) {
 			$.ajax({
-				url: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus?t=' + (new Date()).getTime(),
+				url: this.URLGetUserStatus + '?t=' + (new Date()).getTime(),
 				success: function (data) {
 					if (data.bLogin === false && bForceStartTimer === false) {
 						session.doneCallback();

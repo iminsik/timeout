@@ -110,24 +110,44 @@
 	// ********************************************
     sessionTimer.prototype.validSettingFunctions = [
         {
-            isValid: function () { return typeof this.sessionTimeoutInMsec !== 'number'; },
-            msg: function () { return this.ERRORS.POSITIVESESSIONTIMEOUT; }
+            isValid: function () {
+				return typeof this.sessionTimeoutInMsec !== 'number';
+			},
+            msg: function () {
+				return this.ERRORS.POSITIVESESSIONTIMEOUT;
+			}
         },
         {
-            isValid: function () { return this.sessionTimeoutInMsec <= 0; },
-            msg: function () { return this.ERRORS.NONZEROTIMEOUT; }
+            isValid: function () {
+				return this.sessionTimeoutInMsec <= 0;
+			},
+            msg: function () {
+				return this.ERRORS.NONZEROTIMEOUT;
+			}
         },
         {
-            isValid: function () { return typeof this.sessionTimeoutWarningHappensInMsec !== 'number'; },
-            msg: function () { return this.ERRORS.POSITIVEWARNINGTIME; }
+            isValid: function () {
+				return typeof this.sessionTimeoutWarningHappensInMsec !== 'number';
+			},
+            msg: function () {
+				return this.ERRORS.POSITIVEWARNINGTIME;
+			}
         },
         {
-            isValid: function () { return this.sessionTimeoutWarningHappensInMsec <= 0; },
-            msg: function () { return this.ERRORS.NONWARNINGTIME; }
+            isValid: function () {
+				return this.sessionTimeoutWarningHappensInMsec <= 0;
+			},
+            msg: function () {
+				return this.ERRORS.NONWARNINGTIME;
+			}
         },
         {
-            isValid: function () { return this.sessionTimeoutWarningHappensInMsec >= this.sessionTimeoutInMsec; },
-            msg: function () { return this.ERRORS.WARNINGSMALLERTHANTIMEOUT; }
+            isValid: function () {
+				return this.sessionTimeoutWarningHappensInMsec >= this.sessionTimeoutInMsec;
+			},
+            msg: function () {
+				return this.ERRORS.WARNINGSMALLERTHANTIMEOUT;
+			}
         }
     ];
 
@@ -142,6 +162,9 @@
     };
     sessionTimer.factory.prototype = sessionTimer.prototype;
 
+	// ********************************************
+	// expose sessionTimer to global scope
+	// ********************************************
     if (global && !global.sessionTimer) {
         global.sessionTimer = sessionTimer;
     }
