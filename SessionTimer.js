@@ -2,6 +2,7 @@
 // Session Timer
 // ****************************************
 
+/*jslint indent: 2*/
 (function (global) {
 	'use strict';
 	var sessionTimer, prototype;

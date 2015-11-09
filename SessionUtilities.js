@@ -3,6 +3,8 @@
 // --------------------
 
 /*global jQuery, s_gi, stnw_init_page, console*/
+/*jslint indent: 2*/
+
 (function (global, document, $) {
 	'use strict';
 	var sessionUtilities = function () {
