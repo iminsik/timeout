@@ -1,7 +1,7 @@
 /*global $timer, console, $, sessionUtilities, s_gi*/
 /*jslint indent: 2*/
 var
-	i, len,
+	i, len, sessionUtil = sessionUtilities(),
 	bwcb, awcb, ecb, ccb,
 	clickHelper, warningHelper, sessionWarningHelper,
 	sessions = [],
@@ -12,7 +12,7 @@ var
 	// { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
 	// { name: 'Timer3', warningTime: 55, expiringTime: 60, mode: "debug" },
 	// ***********************************************************************
-		{ name: 'Timer0', warningTime: 5, expiringTime: 30, mode: "debug" }
+		{ name: 'SessionTimer', warningTime: 5, expiringTime: 30, mode: "debug" }
 	],
 	timeoutlightbox = $('#sessionSection').filter(function () {
 		'use strict';
@@ -23,13 +23,11 @@ var
 		onClose: function () {
 			'use strict';
 			// Setting omniture tags
-			sessionUtilities
-				.prototype
-				.setOmniture('alaskacom',
-										 'prop16',
-										 'None',
-										 'sessionExpiring',
-										 'Close');
+			sessionUtil.setOmniture('alaskacom',
+															'prop16',
+															'None',
+															'sessionExpiring',
+															'Close');
 
 			// We need to call timer event ONLY HERE...
 			if (sessions[0].sessionTimer.isExpired() === false) {
@@ -66,13 +64,11 @@ $('#sessionContinue').bind('click', function () {
 	$('#sessionSection').hide();
 
 	// Setting omniture tags
-	sessionUtilities
-		.prototype
-		.setOmniture('alaskacom',
-								 'prop16',
-								 'None',
-								 'sessionExpiring',
-								 'Continue');
+	sessionUtil.setOmniture('alaskacom',
+													'prop16',
+													'None',
+													'sessionExpiring',
+													'Continue');
 
 	// We need to call timer event ONLY HERE...
 	sessions[0].clickContinue();
@@ -86,14 +82,14 @@ warningHelper = function (i, session, timeoutlightbox, mode) {
 	if (mode === 'beforewarningcallback') {
 
 		return function () {
-			$('#Timeleft' + i)
+			$("#Timeleft" + session.name)
 				.text('expires in ' + session.sessionTimer.timeLeft())
 				.css('color', 'black');
 		};
 	} else if (mode === 'afterwarningcallback') {
 
 		return function () {
-			$('#Timeleft' + i)
+			$("#Timeleft" + session.name)
 				.text('expires in ' + session.sessionTimer.timeLeft() + ' WARNING!!!')
 				.css('color', 'red');
 
@@ -111,7 +107,7 @@ warningHelper = function (i, session, timeoutlightbox, mode) {
 	} else if (mode === 'expirecallback') {
 
 		return function () {
-			$('#Timeleft' + i)
+			$('#Timeleft' + session.name)
 				.text('Time has flied.')
 				.css('color', 'red');
 
@@ -197,11 +193,11 @@ for (i = 0, len = sessionSettings.length; i < len; i = i + 1) {
 		.setContinueCallback(ccb);
 
 	$("#buttons")
-		.append("<input type='button' id='Timer"
-							+ i + "Cont' value='Timer "
-							+ i + "' /> <span id='Timeleft"
-							+ i + "'></span><br />");
+		.append("<input type='button' id='"
+							+ sessions[i].name + "' value='"
+							+ sessions[i].name + "' /> <span id='Timeleft"
+							+ sessions[i].name + "'></span><br />");
 
-	$('#Timer' + i + 'Cont').click(clickHelper(sessions[i]));
+	$('#' + sessions[i].name).click(clickHelper(sessions[i]));
 	sessions[i].timerEventStart();
 }
