@@ -64,9 +64,10 @@
 		// check if time settings are all valid.
 		// ********************************************
 		isSettingsValid: function () {
-			var i = 0, len = 0;
-			for (i = 0, len = this.validSettingFunctions.length; i < len; i = i + 1) {
-				if (this.validSettingFunctions[i].isValid.apply(this) === false) {
+			var i = 0, len = this.validSettingFunctions.length;
+			for (i = 0; i < len; i = i + 1) {
+				if (this.validSettingFunctions[i].isValid.apply(this)
+						=== false) {
 					return this.validSettingFunctions[i].msg.apply(this);
 				}
 			}
@@ -167,7 +168,8 @@
 
 	sessionTimer = function () {
 		var obj = global.Object.create(prototype);
-		obj.assignProperties.apply(obj, Array.prototype.slice.call(arguments));
+		obj.assignProperties.apply(obj,
+															 Array.prototype.slice.call(arguments));
 		return obj;
 	};
 

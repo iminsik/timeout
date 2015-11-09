@@ -45,7 +45,11 @@
 		// ****************************************
 		// set Omniture tag
 		// ****************************************
-		setOmniture: function (domain, linkTrackVar, linkTrackEvent, category, event) {
+		setOmniture: function (domain,
+														linkTrackVar,
+														linkTrackEvent,
+														category,
+														event) {
 			if (global.s_gi) {
 				var s = s_gi(domain);
 				s.linkTrackVars = linkTrackVar;
@@ -68,7 +72,9 @@
 					c = c.substring(1, c.length);
 				}
 				if (c.indexOf(nameEQ) === 0) {
-					return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+					return JSON
+						.parse(decodeURIComponent(c.substring(nameEQ.length,
+																									c.length)));
 				}
 			}
 			return {};
@@ -91,7 +97,8 @@
 				t = new Date();
 
 			cookieCollection[key] = value;
-			document.cookie = collectionKey + "=" + JSON.stringify(cookieCollection)
+			document.cookie = collectionKey + "="
+				+ JSON.stringify(cookieCollection)
 				+ "; expires="
 				+ (new Date(t.getFullYear(),
 							t.getMonth(),

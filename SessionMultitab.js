@@ -111,7 +111,9 @@
 		// generate timer check callback will be called 
 		// by 'settimeout'
 		// ********************************************
-		timerEventCheckGenerator: function (beforewarningcb, afterwarningcb, donecb) {
+		timerEventCheckGenerator: function (beforewarningcb,
+																				afterwarningcb,
+																				donecb) {
 			var self = this;
 			return function () {
 				var nCurrentClickCont, bSessionExpiredCookie;
@@ -147,7 +149,8 @@
 
 					// raise callback so client can update its UI
 					if (self.mode.toLowerCase() !== 'release') {
-						// reset the Session, if 'Continue' button is hit in another tab.
+						// reset the Session, if 'Continue' button is hit
+						// in another tab.
 						if (self.multitab.nClickCont < nCurrentClickCont) {
 							self.multitab.nClickCont = nCurrentClickCont;
 
@@ -239,11 +242,13 @@
 
 			// initialize timer callback
 			self.beforeWarningCallback = beforecb || function () {
-				global.console.log(self.name + ' ' + self.sessionTimer.timeLeft()
+				global.console.log(self.name + ' '
+													 + self.sessionTimer.timeLeft()
 													 + ': called Before warning callback.');
 			};
 			self.afterWarningCallback = aftercb || function () {
-				global.console.log(self.name + ' ' + self.sessionTimer.timeLeft()
+				global.console.log(self.name + ' '
+													 + self.sessionTimer.timeLeft()
 													 + ': called After warning callback.');
 			};
 			self.continueCallback = contcb || function () {
@@ -257,7 +262,8 @@
 
 	sessionMultitab = function () {
 		var obj = global.Object.create(prototype);
-		obj.assignProperties.apply(obj, Array.prototype.slice.call(arguments));
+		obj.assignProperties.apply(obj,
+															 Array.prototype.slice.call(arguments));
 		return obj;
 	};
 		
