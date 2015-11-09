@@ -104,7 +104,8 @@ warningHelper = function (i, session, timeoutlightbox, mode) {
 					.text(session.sessionTimer.timeLeft() + ' seconds');
 				$('#sessionSection')
 					.show()
-					.attr('tabindex', '0').focus();
+					.attr('tabindex', '0')
+					.focus();
 			}
 		};
 	} else if (mode === 'expirecallback') {
@@ -115,7 +116,9 @@ warningHelper = function (i, session, timeoutlightbox, mode) {
 				.css('color', 'red');
 
 			if (typeof $.fn.showLightBox === 'function') {
-				$('#sessionExpiring').text('Session Expired').css({ color: 'red' });
+				$('#sessionExpiring')
+					.text('Session Expired')
+					.css({ color: 'red' });
 				$('#sessionKeepActive').css({ visibility: 'hidden' });
 				$('#sessionContinue').css({ visibility: 'hidden' });
 
@@ -140,7 +143,9 @@ warningHelper = function (i, session, timeoutlightbox, mode) {
 								$('#CheckOutExpirationTimestamp')
 									.val($('#CheckOutExpiredTimestamp').val());
 								document.getElementById('Refresh').click();
-							} else { // We may refresh the page not to show outdated login status
+							} else {
+								// We may refresh the page
+								// not to show outdated login status
 								window.location.reload();
 							}
 						}
