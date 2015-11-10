@@ -72,14 +72,12 @@
 		// ********************************************
 		expireMultitabConfig: function () {
 			this.multitab.nClickCont = 0;
-			sessionUtilities
-				.prototype
+			this.sessionUtil
 				.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 												this.CONSTANTS.SESSIONEXPIRED,
 												true,
 												this.CONSTANTS.DOMAIN);
-			sessionUtilities
-				.prototype
+			this.sessionUtil
 				.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 												this.CONSTANTS.NCLICKCONT,
 												0,
@@ -91,8 +89,7 @@
 		// ********************************************
 		clickContinue: function () {
 			var strClickCont =
-					sessionUtilities
-						.prototype
+					this.sessionUtil
 						.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 														this.CONSTANTS.NCLICKCONT);
 
@@ -100,8 +97,7 @@
 				strClickCont = 0;
 			}
 
-			sessionUtilities
-				.prototype
+			this.sessionUtil
 				.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 												this.CONSTANTS.NCLICKCONT,
 												strClickCont + 1,
@@ -121,8 +117,7 @@
 				self.sessionTimer.count = self.sessionTimer.count + 1;
 
 				if (self.sessionTimer.isExpired()
-						|| sessionUtilities
-								.prototype
+						|| self.sessionUtil
 								.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 																this.CONSTANTS.SESSIONEXPIRED) === true) {
 					// if time has passed, finish and cleanup
@@ -137,13 +132,11 @@
 				} else {
 					// otherwise, keep checking
 					nCurrentClickCont
-						= sessionUtilities
-								.prototype
+						= self.sessionUtil
 								.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 																this.CONSTANTS.NCLICKCONT);
 					bSessionExpiredCookie
-						= sessionUtilities
-								.prototype
+						= self.sessionUtil
 								.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 																this.CONSTANTS.SESSIONEXPIRED);
 
@@ -217,19 +210,16 @@
 			var self = this;
 			self.name = name;
 			self.mode = mode || "release";
+			self.sessionUtil = sessionUtilities();
 			self.sessionTimer = sessionTimer(warningSecs, expiringSecs);
-			sessionUtilities
-				.prototype
-				.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
-												this.CONSTANTS.SESSIONEXPIRED,
-												false,
-												this.CONSTANTS.DOMAIN);
-			if (sessionUtilities
-						.prototype
+			self.sessionUtil.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
+																			this.CONSTANTS.SESSIONEXPIRED,
+																			false,
+																			this.CONSTANTS.DOMAIN);
+			if (self.sessionUtil
 						.getCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 														this.CONSTANTS.NCLICKCONT) === null) {
-				sessionUtilities
-					.prototype
+				self.sessionUtil
 					.setCookieByKey(this.CONSTANTS.MULTITABCOOKIE,
 													this.CONSTANTS.NCLICKCONT,
 													0,

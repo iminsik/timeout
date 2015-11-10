@@ -66,8 +66,7 @@
 		isSettingsValid: function () {
 			var i = 0, len = this.validSettingFunctions.length;
 			for (i = 0; i < len; i = i + 1) {
-				if (this.validSettingFunctions[i].isValid.apply(this)
-						=== false) {
+				if (this.validSettingFunctions[i].isValid.apply(this) === false) {
 					return this.validSettingFunctions[i].msg.apply(this);
 				}
 			}

@@ -11,7 +11,8 @@
 		return new sessionUtilities.factory();
 	};
 	sessionUtilities.prototype = {
-		URLGetUserStatus: '//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus',
+		URLGetUserStatus:
+			'//www.alaskaair.com/services/v1/loginvalidator/GetUserStatus',
 		// ****************************************
 		// check if user is logged in or not.
 		// ****************************************
@@ -46,10 +47,10 @@
 		// set Omniture tag
 		// ****************************************
 		setOmniture: function (domain,
-														linkTrackVar,
-														linkTrackEvent,
-														category,
-														event) {
+													linkTrackVar,
+													linkTrackEvent,
+													category,
+													event) {
 			if (global.s_gi) {
 				var s = s_gi(domain);
 				s.linkTrackVars = linkTrackVar;
@@ -65,16 +66,15 @@
 		getCookieCollection: function (collectionName) {
 			var i, len, c,
 				nameEQ = collectionName + "=",
-				cookies = window.document.cookie.split(';');
+				cookies = window.document.cookie.split(';'),
+				dcURIComp = decodeURIComponent;
 			for (i = 0, len = cookies.length; i < len; i = i + 1) {
 				c = cookies[i];
 				while (c.charAt(0) === ' ') {
 					c = c.substring(1, c.length);
 				}
 				if (c.indexOf(nameEQ) === 0) {
-					return JSON
-						.parse(decodeURIComponent(c.substring(nameEQ.length,
-																									c.length)));
+					return JSON.parse(dcURIComp(c.substring(nameEQ.length, c.length)));
 				}
 			}
 			return {};
