@@ -1,10 +1,19 @@
-// --------------------
-// Session Multitab with Cookie
-// beforewarningcallback, 
-// afterwarningcallback,
-// continuecallback,
-// donecallback
-// --------------------
+/******************************************
+  _________________________________
+ | Session Multitab with Cookie    |
+ | - beforewarningcallback,        |
+ | - afterwarningcallback,         |
+ | - continuecallback,             |
+ | - donecallback                  |
+  ---------------------------------
+        \   ^__^
+         \  ($$)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+ ******************************************/
+
+
 
 /*global jQuery */
 /*jslint indent: 2*/
