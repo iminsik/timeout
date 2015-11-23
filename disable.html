@@ -1,0 +1,40 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <h1>Hello, Disabled</h1>
+    <div id="billing">Billing Address</div>
+
+    <div>
+        <div id="name">Name</div>
+        <input type="text" aria-labelledby="name billing"/>
+    </div>
+    <div>
+        <div id="address">Address</div>
+        <input type="text" aria-labelledby="address billing"/>
+    </div>
+    <input id="testcheckbox" type="checkbox" disabled value="disabled checkbox" />
+
+    <table>
+      <tr>
+        <th>Select Person</th>
+        <th>Name</th>
+        <th>Phone</th>
+      </tr>
+      <tr>
+        <td><input type='checkbox' value='true' /></td>
+        <td>Joe</td>
+        <td>3605619079</td>
+      </tr>
+      <tr>
+        <td colspan="3" aria-hidden="true"><div class="borderTopDashed"></div></td>
+      </tr>
+      <tr>
+        <td aria-hidden='true'></td>
+        <td>Lu</td>
+        <td>4255619079</td>
+      </tr>
+    </table>
+  </body>
+
+</html>
