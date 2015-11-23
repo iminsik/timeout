@@ -2,13 +2,11 @@ November 22nd, 2015
 
 Dear Selection Commitee,
 
-Please accept this letter and the attached resume as my application for the role of web developer as advertized on http://http://alaskaair.jobs on Nov 2015.
+Please accept this letter and the attached resume as my application for the role of web developer as advertized on http://alaskaair.jobs on Nov 2015.
 
-I believe that, with my skills, experience and attitude, I can bring a lot to the company and am excited about the prospect. My background is in computational linguistics and natural language processing, but in the past few years, I turned my focus to software development, and had been doing my roles in an aloe distribution company for the last 4 years. 
+I believe that, with my skills, experience and attitude, I can bring a lot to the company and am excited about the prospect. My background is in computational linguistics and natural language processing, but in the past few years, I turned my focus to software development, and had been doing my roles in an aloe distribution company for the last 4 years. Since June 2015, contracting with Alaska Airlines, I have worked in AS.COM team.
 
-Proficient using most key web components, not only javascript, css, php, C#, but also jQuery, MVC framework, SQL database, mobile responsive web, I was able to finish tasks assigned to me before deadline, and could get very positive feedbacks. The most recent project I was involved in was transforming non-mobile responsive web site to mobile responsive one for the current employing company. Other than web tasks, I am playing a key role in managing commission rules for multi-level marketing in the company, 
-
-
+Proficient using most key web components, not only javascript, css, php, C#, but also jQuery, MVC framework, SQL database, mobile responsive web, I was able to finish tasks assigned to me before deadline, and could get very positive feedbacks. One of the recent projects I was involved in was transforming non-mobile responsive web site to mobile responsive one for the current employing company. I played a key role in managing commission rules for multi-level marketing in the company. I am working on primarily accessibility tasks in AS.COM.
 
 I enjoy working either in a team or independently. Every weekend, I am volunteering to help my local community manage their web sites and facilities. 
 
