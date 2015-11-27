@@ -1,4 +1,4 @@
-/*global $timer, console, $, sessionUtilities, s_gi*/
+/*global $timer, console, $, sessionUtilities, s_gi, axe*/
 /*jslint indent: 2*/
 var
 	i, len, sessionUtil = sessionUtilities(),
@@ -12,7 +12,7 @@ var
 	// { name: 'Timer2', warningTime: 45, expiringTime: 50, mode: "debug" },
 	// { name: 'Timer3', warningTime: 55, expiringTime: 60, mode: "debug" },
 	// ***********************************************************************
-		{ name: 'SessionTimer', warningTime: 5, expiringTime: 30, mode: "debug" }
+		{ name: 'SessionTimer', warningTime: 1, expiringTime: 5, mode: "debug" }
 	],
 	timeoutlightbox = $('#sessionSection').filter(function () {
 		'use strict';
@@ -201,3 +201,15 @@ for (i = 0, len = sessionSettings.length; i < len; i = i + 1) {
 	$('#' + sessions[i].name).click(clickHelper(sessions[i]));
 	sessions[i].timerEventStart();
 }
+
+$(document).ready(function () {
+	'use strict';
+	axe.a11yCheck(document, function (results) {
+    if (results.violations.length === 0) {
+			console.log('Should be no accessibility issues');
+		} else {
+			console.log(results.violations.length + ' accessibility issues');
+			console.log(results.violations);
+		}
+	});
+});
